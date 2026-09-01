@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ssligenliang0926.github.io/earn-money/sitemap.xml
+Sitemap: https://quicktool.xin/sitemap.xml
