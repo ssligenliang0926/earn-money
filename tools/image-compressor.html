@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片压缩 - 免费在线压缩图片体积，支持 JPG、PNG、WebP | 极简工具箱</title>
+<meta name="description" content="免费在线图片压缩工具，支持 JPG、PNG、WebP、GIF 等格式，可调节压缩质量与最大尺寸，实时预览压缩效果与体积对比，一键下载压缩后的图片，全程本地处理，图片不上传服务器。">
+<meta name="keywords" content="图片压缩,在线压缩图片,图片压缩工具,压缩JPG,压缩PNG,WebP压缩">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "图片压缩工具",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "All",
+  "description": "本地压缩图片，可调质量与尺寸，实时预览体积对比",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">🗜️ 图片压缩</h1>
+  <p class="page-desc">本地压缩图片体积，可调质量与尺寸，实时预览对比，图片不上传</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label>选择图片（点击或拖拽到下方区域）</label>
+        <div id="icDrop" style="border:2px dashed var(--border);border-radius:8px;padding:32px 16px;text-align:center;color:var(--text-muted);cursor:pointer;background:var(--bg);">
+          <div style="font-size:32px;margin-bottom:8px;">🖼️</div>
+          <div>点击选择图片，或将图片拖拽到这里</div>
+          <div style="font-size:12px;margin-top:6px;">支持 JPG、PNG、WebP、GIF、BMP 等常见格式</div>
+        </div>
+        <input type="file" id="icFile" accept="image/*" style="display:none;">
+      </div>
+
+      <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label for="icQuality">压缩质量：<span id="icQualityValue">80</span>%</label>
+          <input type="range" id="icQuality" min="1" max="100" value="80">
+        </div>
+        <div>
+          <label for="icFormat">输出格式</label>
+          <select id="icFormat">
+            <option value="auto" selected>自动（与原图一致）</option>
+            <option value="image/jpeg">JPEG（适合照片）</option>
+            <option value="image/webp">WebP（体积更小）</option>
+            <option value="image/png">PNG（无损）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="icMaxSize">最大边长（像素，0 表示不缩放）</label>
+        <input type="number" id="icMaxSize" min="0" step="100" value="0" placeholder="例如 1920">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="btnCompress" type="button">压缩图片</button>
+        <button class="btn btn-secondary" id="btnDownload" type="button">下载压缩图</button>
+      </div>
+
+      <div id="icResult" style="display:none;">
+        <div class="stats">
+          <div class="stat-card"><div class="num" id="statOrigSize">-</div><div class="label">原始体积</div></div>
+          <div class="stat-card"><div class="num" id="statNewSize">-</div><div class="label">压缩后体积</div></div>
+          <div class="stat-card"><div class="num" id="statRatio">-</div><div class="label">体积减少</div></div>
+          <div class="stat-card"><div class="num" id="statDims">-</div><div class="label">输出尺寸</div></div>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <label>压缩结果预览</label>
+          <div style="display:flex;justify-content:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;">
+            <img id="icPreview" alt="压缩结果预览" style="max-width:100%;max-height:360px;">
+          </div>
+        </div>
+      </div>
+
+      <p class="msg" id="icMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于图片压缩</h2>
+        <p>本工具使用浏览器内置的图像编解码能力（Canvas）在本地完成压缩：加载图片后按设定的质量与最大边长重新编码，实时显示压缩前后的体积对比。</p>
+        <p>照片类图片推荐使用 JPEG 或 WebP 格式，通常可减少 50% 以上体积；需要透明背景的图标、截图请保留 PNG 或选择 WebP。调整质量滑块可在清晰度与体积之间取得平衡。</p>
+        <p>所有处理均在你的浏览器本地完成，图片不会上传到任何服务器，可放心处理隐私照片。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>压缩后图片会明显变模糊吗？</h3>
+    <p>取决于质量设置。质量 80% 左右时肉眼几乎看不出差别，体积通常可减少一半以上；低于 50% 时可能出现可见的压缩痕迹。建议先用默认 80% 压缩，若体积仍偏大再逐步调低。</p>
+    <h3>为什么 PNG 压缩后体积没变小？</h3>
+    <p>PNG 是无损格式，质量滑块对它无效。若要减小 PNG 体积，可设置最大边长进行缩放，或将输出格式改为 JPEG / WebP（会失去透明背景，透明区域变为白色）。</p>
+    <h3>我的图片会被上传吗？</h3>
+    <p>不会。压缩全程在浏览器本地完成，图片只存在于当前页面内存中，关闭页面即释放，不会发送到任何服务器。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elDrop = document.getElementById('icDrop');
+  var elFile = document.getElementById('icFile');
+  var elQuality = document.getElementById('icQuality');
+  var elQualityValue = document.getElementById('icQualityValue');
+  var elFormat = document.getElementById('icFormat');
+  var elMaxSize = document.getElementById('icMaxSize');
+  var elResult = document.getElementById('icResult');
+  var elPreview = document.getElementById('icPreview');
+  var elMsg = document.getElementById('icMsg');
+
+  var currentFile = null;   /* 原始 File 对象 */
+  var currentImg = null;    /* 原始 Image 对象 */
+  var outputBlob = null;    /* 压缩结果 */
+  var outputUrl = null;
+  var outputExt = 'jpg';
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function showMsg(text, isError) {
+    elMsg.textContent = text;
+    elMsg.className = isError ? 'msg error' : 'msg success';
+  }
+
+  function clearMsg() {
+    elMsg.textContent = '';
+    elMsg.className = 'msg';
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    if (file.type.indexOf('image/') !== 0) {
+      showMsg('请选择图片文件', true);
+      return;
+    }
+    clearMsg();
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        currentFile = file;
+        currentImg = img;
+        outputBlob = null;
+        elResult.style.display = 'none';
+        showMsg('已加载：' + file.name + '（' + img.naturalWidth + ' × ' + img.naturalHeight + '，' + formatBytes(file.size) + '），点击「压缩图片」开始', false);
+      };
+      img.onerror = function () {
+        showMsg('图片解析失败，文件可能已损坏', true);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function compress() {
+    clearMsg();
+    if (!currentImg || !currentFile) {
+      showMsg('请先选择一张图片', true);
+      return;
+    }
+
+    var maxSide = parseInt(elMaxSize.value, 10) || 0;
+    var w = currentImg.naturalWidth;
+    var h = currentImg.naturalHeight;
+    if (maxSide > 0 && (w > maxSide || h > maxSide)) {
+      var scale = maxSide / Math.max(w, h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
+
+    var format = elFormat.value;
+    if (format === 'auto') {
+      format = currentFile.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    }
+    var quality = parseInt(elQuality.value, 10) / 100;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    if (format !== 'image/png') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.drawImage(currentImg, 0, 0, w, h);
+
+    canvas.toBlob(function (blob) {
+      if (!blob) {
+        showMsg('压缩失败，请更换图片或格式', true);
+        return;
+      }
+      outputBlob = blob;
+      outputExt = format === 'image/png' ? 'png' : (format === 'image/webp' ? 'webp' : 'jpg');
+      if (outputUrl) URL.revokeObjectURL(outputUrl);
+      outputUrl = URL.createObjectURL(blob);
+      elPreview.src = outputUrl;
+
+      var ratio = Math.max(0, Math.round((1 - blob.size / currentFile.size) * 100));
+      document.getElementById('statOrigSize').textContent = formatBytes(currentFile.size);
+      document.getElementById('statNewSize').textContent = formatBytes(blob.size);
+      document.getElementById('statRatio').textContent = ratio + '%';
+      document.getElementById('statDims').textContent = w + '×' + h;
+      elResult.style.display = 'block';
+
+      if (blob.size >= currentFile.size) {
+        showMsg('压缩后体积未减小，可尝试降低质量或改用 JPEG / WebP 格式', true);
+      } else {
+        showMsg('压缩完成，体积减少 ' + ratio + '%', false);
+      }
+    }, format, format === 'image/png' ? undefined : quality);
+  }
+
+  elDrop.addEventListener('click', function () { elFile.click(); });
+  elFile.addEventListener('change', function () { loadFile(elFile.files[0]); });
+
+  elDrop.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    elDrop.style.borderColor = 'var(--primary)';
+  });
+  elDrop.addEventListener('dragleave', function () {
+    elDrop.style.borderColor = 'var(--border)';
+  });
+  elDrop.addEventListener('drop', function (e) {
+    e.preventDefault();
+    elDrop.style.borderColor = 'var(--border)';
+    if (e.dataTransfer.files.length > 0) loadFile(e.dataTransfer.files[0]);
+  });
+
+  elQuality.addEventListener('input', function () {
+    elQualityValue.textContent = elQuality.value;
+  });
+
+  document.getElementById('btnCompress').addEventListener('click', compress);
+
+  document.getElementById('btnDownload').addEventListener('click', function () {
+    if (!outputBlob || !outputUrl) {
+      window.toast('请先压缩图片');
+      return;
+    }
+    var base = (currentFile.name || 'image').replace(/\.[^.]+$/, '');
+    var a = document.createElement('a');
+    a.download = base + '-compressed.' + outputExt;
+    a.href = outputUrl;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>金额转中文大写 - 在线人民币金额大写转换工具 | 极简工具箱</title>
+<meta name="description" content="在线金额转中文大写工具：人民币金额一键转换为财务规范大写（壹贰叁肆…元角分整），支持千分位分隔与实时转换。纯前端处理，数据不上传服务器，打开即用。">
+<meta name="keywords" content="金额大写,人民币大写,金额转大写,数字转大写,财务大写,元角分">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.rmb-output {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 1px;
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "金额转中文大写工具",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "All",
+  "description": "人民币金额一键转换为财务规范中文大写",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">金额转中文大写</h1>
+  <p class="page-desc">人民币金额一键转换为财务规范大写（壹贰叁肆…元角分整），实时转换</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="rmbInput">输入金额（最多两位小数，整数部分最多 15 位）</label>
+        <input type="text" id="rmbInput" inputmode="decimal" placeholder="例如 1234.56" value="1234.56">
+      </div>
+      <label class="checkbox-row"><input type="checkbox" id="rmbThousands" checked> 输入框显示千分位分隔符</label>
+
+      <div class="field">
+        <label>大写结果</label>
+        <div class="result-box rmb-output" id="rmbOutput"></div>
+      </div>
+      <p class="msg" id="rmbMsg"></p>
+
+      <div class="btn-group">
+        <button class="btn" id="btnCopy" type="button">复制大写结果</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>输入阿拉伯数字金额后实时转换为中文大写，可直接复制用于支票、发票、收据、合同等财务场景。</p>
+        <p>转换遵循财务规范：整数部分以「元」结尾，无角分时补「整」；角分均为 0 时输出「整」；连续多个 0 只读一个「零」。</p>
+        <p>示例：1234.56 → 壹仟贰佰叁拾肆元伍角陆分；100 → 壹佰元整；0.5 → 伍角。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>大写数字用的是哪一套？</h3>
+    <p>采用财务规范的正体大写：零壹贰叁肆伍陆柒捌玖拾佰仟万亿元角分整，与银行支票、发票填写要求一致。</p>
+    <h3>什么时候需要写「整」字？</h3>
+    <p>金额到「元」为止（没有角分）时写「元整」；有角无分时写「角整」；有分时不写「整」。例如 100 → 壹佰元整，0.50 → 伍角整，0.56 → 伍角陆分。</p>
+    <h3>中间的 0 怎么读？</h3>
+    <p>数字中间的连续 0 只读一个「零」，例如 1001 → 壹仟零壹元整；万、亿级单位前的 0 不重复读零，例如 100000001 → 壹亿零壹元整。</p>
+    <h3>支持多大的金额？</h3>
+    <p>支持整数部分最多 15 位（即千万亿级，999 万亿以内），小数最多两位，超出范围会给出提示。</p>
+    <h3>我的金额数据会被上传吗？</h3>
+    <p>不会。转换完全在浏览器本地完成，可放心处理真实财务数据。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var input = document.getElementById('rmbInput');
+  var output = document.getElementById('rmbOutput');
+  var msg = document.getElementById('rmbMsg');
+  var thousandsBox = document.getElementById('rmbThousands');
+
+  var CN_NUM = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+  var CN_UNIT = ['', '拾', '佰', '仟'];
+  var CN_BIG_UNIT = ['', '万', '亿', '万亿'];
+
+  function setMsg(text, ok) {
+    msg.textContent = text;
+    msg.className = 'msg' + (ok === true ? ' success' : ok === false ? ' error' : '');
+  }
+
+  /* 四位一组转大写（组内规则：千百十个 + 零的处理） */
+  function fourDigits(n) {
+    var s = '';
+    var zeroFlag = false;
+    for (var i = 3; i >= 0; i--) {
+      var d = Math.floor(n / Math.pow(10, i)) % 10;
+      if (d === 0) {
+        zeroFlag = s.length > 0;
+      } else {
+        if (zeroFlag) s += '零';
+        s += CN_NUM[d] + CN_UNIT[i];
+        zeroFlag = false;
+      }
+    }
+    return s;
+  }
+
+  function intToUpper(intStr) {
+    if (intStr === '' || intStr === '0') return '';
+    var groups = [];
+    var s = intStr;
+    while (s.length > 4) {
+      groups.unshift(parseInt(s.slice(-4), 10));
+      s = s.slice(0, -4);
+    }
+    groups.unshift(parseInt(s, 10));
+
+    var parts = [];
+    for (var i = 0; i < groups.length; i++) {
+      var g = groups[i];
+      var unitIdx = groups.length - 1 - i;
+      if (g === 0) continue;
+      var seg = fourDigits(g) + CN_BIG_UNIT[unitIdx];
+      /* 该组不足四位且前面还有非零组时，需补零，如 1001000 → 壹佰万零壹仟 */
+      if (parts.length > 0 && g < 1000) seg = '零' + seg;
+      parts.push(seg);
+    }
+    return parts.join('');
+  }
+
+  function toUpper(amountStr) {
+    var cleaned = amountStr.replace(/,/g, '').trim();
+    if (!cleaned) return { ok: false, msg: '请输入金额' };
+    if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) {
+      return { ok: false, msg: '金额格式不正确：仅支持数字，小数最多两位' };
+    }
+    var dot = cleaned.indexOf('.');
+    var intPart = dot === -1 ? cleaned : cleaned.slice(0, dot);
+    var decPart = dot === -1 ? '' : cleaned.slice(dot + 1);
+    intPart = intPart.replace(/^0+(?=\d)/, '');
+
+    if (intPart.length > 15) {
+      return { ok: false, msg: '金额过大：整数部分最多支持 15 位' };
+    }
+
+    var isZeroInt = /^0*$/.test(intPart);
+    var intText = isZeroInt ? '' : intToUpper(intPart) + '元';
+    var jiao = decPart.charAt(0) || '0';
+    var fen = decPart.charAt(1) || '0';
+
+    var result;
+    if (jiao === '0' && fen === '0') {
+      result = isZeroInt ? '零元整' : intText + '整';
+    } else if (fen === '0') {
+      result = (isZeroInt ? '' : intText) + CN_NUM[+jiao] + '角整';
+    } else if (jiao === '0') {
+      result = (isZeroInt ? '' : intText + '零') + CN_NUM[+fen] + '分';
+    } else {
+      result = (isZeroInt ? '' : intText) + CN_NUM[+jiao] + '角' + CN_NUM[+fen] + '分';
+    }
+    return { ok: true, text: result };
+  }
+
+  function formatThousands(v) {
+    var dot = v.indexOf('.');
+    var intPart = dot === -1 ? v : v.slice(0, dot);
+    var decPart = dot === -1 ? '' : v.slice(dot);
+    intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return intPart + decPart;
+  }
+
+  function run() {
+    var r = toUpper(input.value);
+    if (!r.ok) {
+      output.textContent = '';
+      setMsg(input.value.trim() ? r.msg : '', input.value.trim() ? false : null);
+      return;
+    }
+    output.textContent = r.text;
+    setMsg('✓ 转换完成', true);
+  }
+
+  input.addEventListener('input', function () {
+    /* 只保留数字、小数点与已有逗号，多余字符直接过滤 */
+    var v = input.value.replace(/[^\d.,]/g, '');
+    var dot = v.indexOf('.');
+    if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '');
+    if (thousandsBox.checked) v = formatThousands(v);
+    else v = v.replace(/,/g, '');
+    if (v !== input.value) input.value = v;
+    run();
+  });
+
+  thousandsBox.addEventListener('change', function () {
+    var v = input.value.replace(/,/g, '');
+    input.value = thousandsBox.checked ? formatThousands(v) : v;
+    input.focus();
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    window.copyText(output.textContent);
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    input.value = '';
+    run();
+    input.focus();
+  });
+
+  run();
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

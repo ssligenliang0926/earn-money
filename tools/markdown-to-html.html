@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown 转 HTML - 在线Markdown实时转换HTML工具 | 极简工具箱</title>
+<meta name="description" content="在线Markdown转HTML工具：Markdown实时转换为HTML代码，支持GFM表格、代码块、链接图片，提供渲染预览与一键复制。纯前端处理，数据不上传服务器，打开即用。">
+<meta name="keywords" content="Markdown转HTML,Markdown在线转换,Markdown渲染,Markdown编辑器,Markdown预览,HTML转换">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.md-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 140px;
+  font-size: 14px;
+  overflow-wrap: break-word;
+}
+.md-preview h1, .md-preview h2, .md-preview h3,
+.md-preview h4, .md-preview h5, .md-preview h6 { margin: 16px 0 8px; line-height: 1.4; }
+.md-preview h1 { font-size: 24px; }
+.md-preview h2 { font-size: 20px; }
+.md-preview h3 { font-size: 17px; }
+.md-preview h4, .md-preview h5, .md-preview h6 { font-size: 15px; }
+.md-preview p { margin: 8px 0; }
+.md-preview ul, .md-preview ol { margin: 8px 0; padding-left: 24px; }
+.md-preview li { margin: 2px 0; }
+.md-preview code {
+  background: var(--primary-light);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  font-size: 13px;
+}
+.md-preview pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.md-preview pre code { background: none; padding: 0; }
+.md-preview blockquote {
+  border-left: 3px solid var(--primary);
+  background: var(--primary-light);
+  padding: 6px 12px;
+  margin: 8px 0;
+  border-radius: 0 6px 6px 0;
+  color: var(--text-muted);
+}
+.md-preview table { border-collapse: collapse; margin: 8px 0; width: 100%; }
+.md-preview th, .md-preview td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+.md-preview th { background: var(--primary-light); }
+.md-preview img { max-width: 100%; }
+.md-preview hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+.md-preview a { color: var(--primary); }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Markdown 转 HTML 工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "Markdown 实时转换为 HTML，支持渲染预览与复制",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">Markdown 转 HTML</h1>
+  <p class="page-desc">Markdown 实时转换为 HTML 代码，支持 GFM 表格与代码块，可切换渲染预览</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="mdInput">输入 Markdown</label>
+        <textarea id="mdInput" rows="14" spellcheck="false" placeholder="在此输入或粘贴 Markdown 文本，输入时自动转换为 HTML…"></textarea>
+      </div>
+      <label class="checkbox-row"><input type="checkbox" id="mdBreaks"> 将单个换行转换为 &lt;br&gt;（默认合并为同一段落）</label>
+      <div class="btn-group">
+        <button class="btn" id="btnTabCode" type="button">HTML 代码</button>
+        <button class="btn btn-secondary" id="btnTabPreview" type="button">渲染预览</button>
+        <button class="btn btn-secondary" id="btnSample" type="button">填入示例</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+      <div class="field" id="mdCodeField">
+        <label for="mdOutput">输出 HTML</label>
+        <textarea id="mdOutput" rows="12" readonly spellcheck="false" placeholder="转换后的 HTML 代码将显示在这里"></textarea>
+      </div>
+      <div class="field" id="mdPreviewField" style="display:none">
+        <label>渲染预览</label>
+        <div class="md-preview" id="mdPreview"></div>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnCopy" type="button">复制 HTML</button>
+      </div>
+      <p class="msg" id="mdMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>在输入框中输入或粘贴 Markdown 文本，页面会实时将其转换为 HTML 代码，无需点击按钮。</p>
+        <p>支持标题、列表、加粗、斜体、链接、图片、引用、代码块、表格（GFM）、分割线等常用语法；勾选选项后单个换行会转换为 &lt;br&gt;。</p>
+        <p>点击「渲染预览」可查看排版效果，点击「复制 HTML」即可把转换结果粘贴到网站或富文本编辑器中使用。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>支持哪些 Markdown 语法？</h3>
+    <p>支持 GFM（GitHub Flavored Markdown）常用语法：多级标题、有序/无序列表、加粗、斜体、删除线、行内代码、代码块、链接、图片、引用、分割线以及表格等。</p>
+    <h3>单个换行为什么没有变成新行？</h3>
+    <p>标准 Markdown 中，段落内的单个换行会被合并为同一段落。如果需要每个换行都生成 &lt;br&gt;，勾选上方的「将单个换行转换为 &lt;br&gt;」选项即可。</p>
+    <h3>Markdown 里写的 HTML 标签会被保留吗？</h3>
+    <p>会。Markdown 中的原始 HTML 会原样输出到结果中。如果转换结果要发布到公开网站且内容来自他人提交，请注意 XSS 风险，建议先做 HTML 过滤。</p>
+    <h3>我的内容会被上传吗？</h3>
+    <p>不会。转换完全在你的浏览器本地完成，页面不会上传任何内容，可放心处理未公开的文稿。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script src="../js/vendor/marked.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var input = document.getElementById('mdInput');
+  var output = document.getElementById('mdOutput');
+  var preview = document.getElementById('mdPreview');
+  var msg = document.getElementById('mdMsg');
+  var codeField = document.getElementById('mdCodeField');
+  var previewField = document.getElementById('mdPreviewField');
+  var btnTabCode = document.getElementById('btnTabCode');
+  var btnTabPreview = document.getElementById('btnTabPreview');
+  var breaksBox = document.getElementById('mdBreaks');
+
+  function setMsg(text, ok) {
+    msg.textContent = text;
+    msg.className = 'msg' + (ok === true ? ' success' : ok === false ? ' error' : '');
+  }
+
+  function render() {
+    var md = input.value;
+    if (!md.trim()) {
+      output.value = '';
+      preview.innerHTML = '';
+      setMsg('', null);
+      return;
+    }
+    try {
+      var html = window.marked.parse(md);
+      output.value = html;
+      preview.innerHTML = html;
+      setMsg('✓ 已实时转换，HTML 共 ' + html.length + ' 字符', true);
+    } catch (e) {
+      setMsg('转换失败：' + e.message, false);
+    }
+  }
+
+  function setTab(tab) {
+    var isCode = tab === 'code';
+    codeField.style.display = isCode ? '' : 'none';
+    previewField.style.display = isCode ? 'none' : '';
+    btnTabCode.className = isCode ? 'btn' : 'btn btn-secondary';
+    btnTabPreview.className = isCode ? 'btn btn-secondary' : 'btn';
+  }
+
+  input.addEventListener('input', render);
+
+  breaksBox.addEventListener('change', function () {
+    window.marked.use({ breaks: breaksBox.checked });
+    render();
+  });
+
+  btnTabCode.addEventListener('click', function () { setTab('code'); });
+  btnTabPreview.addEventListener('click', function () { setTab('preview'); });
+
+  document.getElementById('btnSample').addEventListener('click', function () {
+    input.value = [
+      '# 一级标题',
+      '',
+      '## 二级标题',
+      '',
+      '这是一个段落，支持 **加粗**、*斜体*、`行内代码` 和 [链接](https://example.com)。',
+      '',
+      '### 列表',
+      '',
+      '- 无序列表项 1',
+      '- 无序列表项 2',
+      '',
+      '1. 有序列表项 1',
+      '2. 有序列表项 2',
+      '',
+      '### 代码块',
+      '',
+      '```js',
+      "function hello(name) {",
+      "  console.log('Hello, ' + name);",
+      '}',
+      '```',
+      '',
+      '### 表格',
+      '',
+      '| 工具 | 说明 |',
+      '| --- | --- |',
+      '| JSON 格式化 | 校验、格式化与压缩 |',
+      '| 时间戳转换 | 时间戳与日期互转 |',
+      '',
+      '> 这是一段引用文字。',
+      '',
+      '---',
+      '',
+      '转换完成。'
+    ].join('\n');
+    render();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    input.value = '';
+    render();
+    input.focus();
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    window.copyText(output.value);
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

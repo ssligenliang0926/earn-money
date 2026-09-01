@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二维码生成器 - 免费在线生成二维码图片并下载 PNG | 极简工具箱</title>
+<meta name="description" content="免费在线二维码生成器，实时生成二维码图片，完美支持中文内容，可自定义容错级别、尺寸与前景色、背景色，一键下载 PNG 或复制图片，全程本地计算，数据不离开浏览器。">
+<meta name="keywords" content="二维码生成器,在线生成二维码,二维码生成工具,二维码下载,二维码制作">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "二维码生成器",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "All",
+  "description": "实时生成二维码，支持中文，自定义颜色与尺寸，下载 PNG",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">🔳 二维码生成器</h1>
+  <p class="page-desc">实时生成二维码，支持中文，自定义颜色与尺寸，一键下载 PNG</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="qrText">二维码内容</label>
+        <textarea id="qrText" rows="4" placeholder="输入文本、网址、名片信息等任意内容…">https://quicktool.xin</textarea>
+      </div>
+
+      <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label for="qrEc">容错级别</label>
+          <select id="qrEc">
+            <option value="L">L（约 7% 恢复）</option>
+            <option value="M" selected>M（约 15% 恢复）</option>
+            <option value="Q">Q（约 25% 恢复）</option>
+            <option value="H">H（约 30% 恢复）</option>
+          </select>
+        </div>
+        <div>
+          <label for="qrSize">图片尺寸</label>
+          <select id="qrSize">
+            <option value="256">256 × 256</option>
+            <option value="384">384 × 384</option>
+            <option value="512" selected>512 × 512</option>
+            <option value="768">768 × 768</option>
+            <option value="1024">1024 × 1024</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label for="qrFg">前景色</label>
+          <input type="color" id="qrFg" value="#000000" style="width:100%;height:44px;padding:4px;cursor:pointer;">
+        </div>
+        <div>
+          <label for="qrBg">背景色</label>
+          <input type="color" id="qrBg" value="#ffffff" style="width:100%;height:44px;padding:4px;cursor:pointer;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>二维码预览</label>
+        <div style="display:flex;justify-content:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;">
+          <canvas id="qrCanvas" width="256" height="256" style="max-width:100%;height:auto;"></canvas>
+        </div>
+        <p class="msg" id="qrInfo"></p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="btnDownload" type="button">下载 PNG</button>
+        <button class="btn btn-secondary" id="btnCopyImg" type="button">复制图片</button>
+      </div>
+
+      <p class="msg" id="qrMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于二维码生成器</h2>
+        <p>本工具基于标准 QR Code 规范在浏览器本地生成二维码，内容以 UTF-8 编码写入，完美支持中文、网址、名片、Wi-Fi 配置等任意文本，主流扫码应用均可正常识别。</p>
+        <p>修改内容、容错级别、尺寸或颜色时会实时重新生成预览，确认无误后可一键下载 PNG 图片或直接复制到剪贴板，方便粘贴到文档、海报与公众号文章中。</p>
+        <p>所有计算均在你的浏览器本地完成，输入的内容不会上传到任何服务器。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>容错级别应该选哪个？</h3>
+    <p>L、M、Q、H 四个级别分别代表二维码破损约 7%、15%、25%、30% 时仍可被识别恢复。级别越高容错越强，但相同内容下图案更密集、模块更多。一般用途选 M 即可；如果二维码会被印刷、可能部分遮挡或叠加 Logo，建议选 Q 或 H。</p>
+    <h3>二维码最多能放多少内容？</h3>
+    <p>二维码有固定容量上限，本工具会自动选择能容纳内容的最小版本（1～40）。纯数字最多约 7000 字符，普通中英文混合约 2000 字符以内。如果提示内容过长，请精简文本或使用短链接。</p>
+    <h3>生成的二维码会过期吗？</h3>
+    <p>不会。本工具生成的是静态二维码，全部内容直接编码在图案中，永久有效，不依赖任何服务器。只有「活码」（内容存服务器、图案指向中转地址）才可能过期，本工具不生成此类二维码。</p>
+  </section>
+</main>
+<script src="../js/vendor/qrcode.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* 启用 UTF-8 编码，支持中文内容 */
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+
+  var elText = document.getElementById('qrText');
+  var elEc = document.getElementById('qrEc');
+  var elSize = document.getElementById('qrSize');
+  var elFg = document.getElementById('qrFg');
+  var elBg = document.getElementById('qrBg');
+  var elCanvas = document.getElementById('qrCanvas');
+  var elInfo = document.getElementById('qrInfo');
+  var elMsg = document.getElementById('qrMsg');
+  var ctx = elCanvas.getContext('2d');
+
+  var hasQR = false;
+
+  /* 自动选择能容纳内容的最小版本（1～40） */
+  function createQR(text, ecLevel) {
+    for (var v = 1; v <= 40; v++) {
+      try {
+        var qr = qrcode(v, ecLevel);
+        qr.addData(text);
+        qr.make();
+        return qr;
+      } catch (e) {
+        if (String(e).indexOf('code length overflow') === -1) throw e;
+      }
+    }
+    return null;
+  }
+
+  function render() {
+    elMsg.textContent = '';
+    elMsg.className = 'msg';
+
+    var text = elText.value;
+    if (!text) {
+      hasQR = false;
+      elCanvas.width = 256;
+      elCanvas.height = 256;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 256, 256);
+      elInfo.textContent = '输入内容后自动生成二维码';
+      return;
+    }
+
+    var qr;
+    try {
+      qr = createQR(text, elEc.value);
+    } catch (e) {
+      qr = null;
+    }
+
+    if (!qr) {
+      hasQR = false;
+      elMsg.textContent = '内容过长，超出二维码容量上限，请精简内容';
+      elMsg.className = 'msg error';
+      elInfo.textContent = '';
+      return;
+    }
+
+    var size = parseInt(elSize.value, 10);
+    var count = qr.getModuleCount();
+    var margin = 4; /* 标准静区：4 个模块 */
+    var cell = size / (count + margin * 2);
+
+    elCanvas.width = size;
+    elCanvas.height = size;
+
+    ctx.fillStyle = elBg.value;
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = elFg.value;
+    for (var r = 0; r < count; r++) {
+      for (var c = 0; c < count; c++) {
+        if (qr.isDark(r, c)) {
+          var x0 = Math.round((margin + c) * cell);
+          var y0 = Math.round((margin + r) * cell);
+          var x1 = Math.round((margin + c + 1) * cell);
+          var y1 = Math.round((margin + r + 1) * cell);
+          ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+        }
+      }
+    }
+
+    hasQR = true;
+    elInfo.textContent = '版本：' + Math.round((count - 17) / 4) + ' · 模块：' + count + ' × ' + count;
+  }
+
+  elText.addEventListener('input', render);
+  elEc.addEventListener('change', render);
+  elSize.addEventListener('change', render);
+  elFg.addEventListener('input', render);
+  elBg.addEventListener('input', render);
+
+  document.getElementById('btnDownload').addEventListener('click', function () {
+    if (!hasQR) { window.toast('还没有可下载的二维码'); return; }
+    var a = document.createElement('a');
+    a.download = 'qrcode.png';
+    a.href = elCanvas.toDataURL('image/png');
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
+  document.getElementById('btnCopyImg').addEventListener('click', function () {
+    if (!hasQR) { window.toast('还没有可复制的二维码'); return; }
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      window.toast('当前浏览器不支持复制图片，请使用下载');
+      return;
+    }
+    elCanvas.toBlob(function (blob) {
+      try {
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(
+          function () { window.toast('图片已复制到剪贴板'); },
+          function () { window.toast('复制失败，请使用下载'); }
+        );
+      } catch (e) {
+        window.toast('当前浏览器不支持复制图片，请使用下载');
+      }
+    }, 'image/png');
+  });
+
+  render();
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

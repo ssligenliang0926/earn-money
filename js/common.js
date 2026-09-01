@@ -28,7 +28,12 @@
     { file: 'password-generator.html', name: '密码生成器',    icon: '🔑', desc: '生成高强度随机密码，长度与字符类型可定制' },
     { file: 'word-counter.html',       name: '字数统计',      icon: '📝', desc: '字符数、字数、行数实时统计，中英混排准确' },
     { file: 'color-converter.html',    name: '颜色转换',      icon: '🎨', desc: 'HEX、RGB、HSL 颜色互转，实时预览取色' },
-    { file: 'uuid-generator.html',     name: 'UUID 生成器',   icon: '🆔', desc: '批量生成 UUID v4，支持大写与去连字符' }
+    { file: 'uuid-generator.html',     name: 'UUID 生成器',   icon: '🆔', desc: '批量生成 UUID v4，支持大写与去连字符' },
+    { file: 'markdown-to-html.html',   name: 'Markdown 转 HTML', icon: '📄', desc: 'Markdown 实时转换为 HTML，支持渲染预览' },
+    { file: 'regex-tester.html',       name: '正则测试',      icon: '🔍', desc: '正则表达式实时匹配、高亮与替换' },
+    { file: 'rmb-uppercase.html',      name: '金额转大写',    icon: '💰', desc: '人民币金额一键转财务规范中文大写' },
+    { file: 'qrcode-generator.html',   name: '二维码生成器',  icon: '🔳', desc: '实时生成二维码，支持中文，下载 PNG' },
+    { file: 'image-compressor.html',   name: '图片压缩',      icon: '🗜️', desc: '本地压缩图片体积，可调质量与尺寸' }
   ];
 
   function toolUrl(file) {
