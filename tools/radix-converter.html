@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>进制转换 - 在线二进制/八进制/十进制/十六进制转换工具 | 极简工具箱</title>
+<meta name="description" content="在线进制转换工具：二进制、八进制、十进制、十六进制实时互转，支持超大数值精确转换，自动识别 0x / 0b 前缀。纯前端处理，打开即用。">
+<meta name="keywords" content="进制转换,二进制转十进制,十进制转十六进制,八进制转换,0x转换,在线进制转换器">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "进制转换工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "二进制、八进制、十进制、十六进制实时互转",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6360666557237693"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">进制转换</h1>
+  <p class="page-desc">二进制 / 八进制 / 十进制 / 十六进制实时互转，支持超大数值精确计算</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="numInput">输入数值</label>
+        <input type="text" id="numInput" spellcheck="false" placeholder="如：255、0xFF、11111111，输入后自动转换">
+      </div>
+      <div class="field">
+        <label for="fromBase">该数值的进制</label>
+        <select id="fromBase">
+          <option value="2">二进制（Binary）</option>
+          <option value="8">八进制（Octal）</option>
+          <option value="10" selected>十进制（Decimal）</option>
+          <option value="16">十六进制（Hex）</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+
+      <div class="field">
+        <label>十进制（Decimal）</label>
+        <div class="result-box" id="out10"></div>
+        <div class="btn-group"><button class="btn btn-secondary" data-copy="out10" type="button">复制</button></div>
+      </div>
+      <div class="field">
+        <label>十六进制（Hex）</label>
+        <div class="result-box" id="out16"></div>
+        <div class="btn-group"><button class="btn btn-secondary" data-copy="out16" type="button">复制</button></div>
+      </div>
+      <div class="field">
+        <label>八进制（Octal）</label>
+        <div class="result-box" id="out8"></div>
+        <div class="btn-group"><button class="btn btn-secondary" data-copy="out8" type="button">复制</button></div>
+      </div>
+      <div class="field">
+        <label>二进制（Binary）</label>
+        <div class="result-box" id="out2"></div>
+        <div class="btn-group"><button class="btn btn-secondary" data-copy="out2" type="button">复制</button></div>
+      </div>
+      <p class="msg" id="convMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>在输入框中填入数值，选择它所属的进制，四种进制的结果会实时显示，无需点击按钮。每行结果均可单独复制。</p>
+        <p>支持负数（以 - 开头）；当所选进制与常见前缀匹配时会自动识别并去除：十六进制的 0x、二进制的 0b、八进制的 0o。十六进制结果统一以大写显示。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>很大的数字转换会丢失精度吗？</h3>
+    <p>不会。本工具优先使用浏览器原生的 BigInt 大数运算，任意长度的整数都能精确转换；仅在极老的浏览器上才退回普通数值计算，此时超出 2^53 的结果会给出提示。</p>
+    <h3>十六进制一般用在哪些场景？</h3>
+    <p>网页颜色值（如 #FF0000）、Unix 文件权限（0755）、内存地址、Unicode 码点、RGB 颜色分量等，都以十六进制表示，开发中经常需要与十进制、二进制互转。</p>
+    <h3>输入 0x 开头报错怎么办？</h3>
+    <p>请确认「该数值的进制」选择了十六进制。前缀只在与其进制匹配时才会被自动去除：选了十进制再输入 0xFF 会被视为非法字符。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var input = document.getElementById('numInput');
+  var fromBase = document.getElementById('fromBase');
+  var msg = document.getElementById('convMsg');
+  var outs = {
+    2: document.getElementById('out2'),
+    8: document.getElementById('out8'),
+    10: document.getElementById('out10'),
+    16: document.getElementById('out16')
+  };
+
+  var DIGITS = '0123456789abcdefghijklmnopqrstuvwxyz';
+  var hasBigInt = typeof window.BigInt === 'function';
+
+  function setMsg(text, ok) {
+    msg.textContent = text;
+    msg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function clearOutputs() {
+    for (var k in outs) outs[k].textContent = '';
+  }
+
+  function parseBig(s, base) {
+    var result = window.BigInt(0), b = window.BigInt(base), i, d;
+    for (i = 0; i < s.length; i++) {
+      d = DIGITS.indexOf(s.charAt(i));
+      result = result * b + window.BigInt(d);
+    }
+    return result;
+  }
+
+  function convert() {
+    clearOutputs();
+    var raw = input.value.trim().toLowerCase();
+    if (!raw) { msg.textContent = ''; msg.className = 'msg'; return; }
+
+    var base = parseInt(fromBase.value, 10);
+    var s = raw, negative = false;
+    if (s.charAt(0) === '-' || s.charAt(0) === '+') {
+      negative = s.charAt(0) === '-';
+      s = s.slice(1);
+    }
+    if (base === 16 && s.indexOf('0x') === 0) s = s.slice(2);
+    else if (base === 2 && s.indexOf('0b') === 0) s = s.slice(2);
+    else if (base === 8 && s.indexOf('0o') === 0) s = s.slice(2);
+
+    if (!s) { setMsg('请输入有效的数值', false); return; }
+
+    for (var i = 0; i < s.length; i++) {
+      var d = DIGITS.indexOf(s.charAt(i));
+      if (d < 0 || d >= base) {
+        setMsg('「' + s.charAt(i) + '」不是合法的 ' + base + ' 进制字符', false);
+        return;
+      }
+    }
+
+    var sign = negative ? '-' : '';
+    if (hasBigInt) {
+      var n = parseBig(s, base);
+      if (n === window.BigInt(0)) sign = '';
+      outs[10].textContent = sign + n.toString(10);
+      outs[16].textContent = sign + n.toString(16).toUpperCase();
+      outs[8].textContent = sign + n.toString(8);
+      outs[2].textContent = sign + n.toString(2);
+    } else {
+      var v = parseInt(s, base);
+      if (v === 0) sign = '';
+      outs[10].textContent = sign + v.toString(10);
+      outs[16].textContent = sign + v.toString(16).toUpperCase();
+      outs[8].textContent = sign + v.toString(8);
+      outs[2].textContent = sign + v.toString(2);
+      if (v > 9007199254740991) {
+        setMsg('注意：当前浏览器不支持大数运算，结果在超出 2^53 后可能不精确', false);
+        return;
+      }
+    }
+    setMsg('✓ 转换完成', true);
+  }
+
+  input.addEventListener('input', convert);
+  fromBase.addEventListener('change', convert);
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    input.value = '';
+    clearOutputs();
+    msg.textContent = '';
+    msg.className = 'msg';
+    input.focus();
+  });
+
+  /* 复制按钮（data-copy 指向结果框 id） */
+  var copyBtns = document.querySelectorAll('[data-copy]');
+  for (var i = 0; i < copyBtns.length; i++) {
+    copyBtns[i].addEventListener('click', function () {
+      var box = document.getElementById(this.getAttribute('data-copy'));
+      window.copyText(box.textContent);
+    });
+  }
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

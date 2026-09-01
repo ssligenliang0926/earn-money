@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>房贷计算器 - 等额本息/等额本金月供利息在线计算 | 极简工具箱</title>
+<meta name="description" content="免费在线房贷计算器：输入贷款金额、年限与利率，支持等额本息与等额本金两种还款方式，计算月供、总利息与总还款额，两种方式直观对比。纯前端计算，数据不上传服务器。">
+<meta name="keywords" content="房贷计算器,房贷月供计算,等额本息,等额本金,贷款利息计算,购房贷款计算">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "房贷计算器",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "description": "等额本息与等额本金月供、总利息、总还款额计算与对比",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6360666557237693"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">🏠 房贷计算器</h1>
+  <p class="page-desc">等额本息 / 等额本金月供与总利息计算，两种方式直观对比</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="loanAmount">贷款金额（万元）</label>
+        <input type="number" id="loanAmount" min="1" max="10000" step="1" placeholder="例如 100" inputmode="decimal" value="100">
+      </div>
+      <div class="field">
+        <label for="loanYears">贷款年限（1 ~ 30 年）</label>
+        <input type="number" id="loanYears" min="1" max="30" step="1" placeholder="例如 30" inputmode="numeric" value="30">
+      </div>
+      <div class="field">
+        <label for="loanRate">年利率（%，例如 3.5 表示 3.5%）</label>
+        <input type="number" id="loanRate" min="0.01" max="24" step="0.01" placeholder="例如 3.5" inputmode="decimal" value="3.5">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn btn-secondary rate-preset" data-rate="3.5" type="button" style="padding:5px 12px;font-size:13px">商贷参考 3.5%</button>
+          <button class="btn btn-secondary rate-preset" data-rate="2.85" type="button" style="padding:5px 12px;font-size:13px">公积金参考 2.85%</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>还款方式</label>
+        <label class="radio-row"><input type="radio" name="repayMode" value="equal-installment" checked> 等额本息（每月还款额固定）</label>
+        <label class="radio-row"><input type="radio" name="repayMode" value="equal-principal"> 等额本金（月供逐月递减）</label>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnCalc" type="button">计算月供</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+
+      <div id="loanResult" style="display:none">
+        <div style="text-align:center;padding:8px 0 4px">
+          <div style="font-size:13px;color:var(--text-muted)" id="monthlyLabel">每月还款</div>
+          <div id="monthlyValue" style="font-size:40px;font-weight:700;line-height:1.2;color:var(--primary)"></div>
+          <div id="monthlySub" style="font-size:13px;color:var(--text-muted);margin-top:4px"></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="num" id="totalInterest">—</div>
+            <div class="label">总利息（万元）</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="totalRepay">—</div>
+            <div class="label">总还款额（万元）</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="interestRatio">—</div>
+            <div class="label">利息占比</div>
+          </div>
+        </div>
+
+        <div id="compareBox" style="margin-top:16px">
+          <label style="margin-bottom:8px">两种还款方式对比</label>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border);color:var(--text-muted)">
+                <th style="text-align:left;padding:8px">方式</th>
+                <th style="text-align:right;padding:8px">首月月供</th>
+                <th style="text-align:right;padding:8px">末月月供</th>
+                <th style="text-align:right;padding:8px">总利息（万元）</th>
+              </tr>
+            </thead>
+            <tbody style="color:var(--text-muted)">
+              <tr style="border-bottom:1px solid var(--border)">
+                <td style="padding:8px">等额本息</td>
+                <td style="text-align:right;padding:8px" id="cmpInstallmentMonthly">—</td>
+                <td style="text-align:right;padding:8px" id="cmpInstallmentLast">—</td>
+                <td style="text-align:right;padding:8px" id="cmpInstallmentInterest">—</td>
+              </tr>
+              <tr>
+                <td style="padding:8px">等额本金</td>
+                <td style="text-align:right;padding:8px" id="cmpPrincipalFirst">—</td>
+                <td style="text-align:right;padding:8px" id="cmpPrincipalLast">—</td>
+                <td style="text-align:right;padding:8px" id="cmpPrincipalInterest">—</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="msg" id="compareTip" style="color:var(--text-muted)"></p>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btnCopyResult" type="button">复制结果</button>
+        </div>
+      </div>
+      <p class="msg" id="loanMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>输入贷款金额（万元）、贷款年限与年利率后点击「计算月供」，即可得到所选还款方式下的月供、总利息与总还款额，下方表格同时对比两种方式的差异。</p>
+        <p><strong>等额本息</strong>：每月还款额固定，前期利息占比高，总利息略多，适合收入稳定的人群。</p>
+        <p><strong>等额本金</strong>：每月归还固定本金、利息逐月减少，月供逐月递减，总利息更少，适合前期还款能力强的人群。</p>
+        <p>页面中的参考利率仅为示例，实际利率请以银行最新报价与 LPR 公告为准。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>等额本息和等额本金怎么选？</h3>
+    <p>等额本息每月还款额固定，便于规划收支，但总利息更多；等额本金前期月供较高、逐月递减，总利息更省。以 100 万贷款、30 年、年利率 3.5% 为例，等额本息月供约 4490 元、总利息约 61.7 万；等额本金首月月供约 5694 元并逐月递减，总利息约 52.6 万，少付约 9 万元。</p>
+    <h3>月供计算公式是什么？</h3>
+    <p>等额本息：月供 = 本金 × 月利率 × (1+月利率)^期数 ÷ [(1+月利率)^期数 − 1]。等额本金：每月归还本金 = 本金 ÷ 期数，第 k 期月供 = 每月本金 + (本金 − 已还本金) × 月利率，其中月利率 = 年利率 ÷ 12。</p>
+    <h3>计算结果和银行实际还款会有差异吗？</h3>
+    <p>本工具按固定利率、等额分期模型计算，与银行标准算法一致。若采用浮动利率（LPR 加点）且未来 LPR 调整，或存在提前还款，实际还款额会发生变化，请以银行还款计划为准。</p>
+    <h3>公积金贷款和商业贷款可以一起算吗？</h3>
+    <p>组合贷可以分开计算：分别输入公积金贷款与商业贷款的金额和利率各算一次，再将两部分月供相加即可。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elAmount = document.getElementById('loanAmount');
+  var elYears = document.getElementById('loanYears');
+  var elRate = document.getElementById('loanRate');
+  var elResult = document.getElementById('loanResult');
+  var elMonthlyLabel = document.getElementById('monthlyLabel');
+  var elMonthlyValue = document.getElementById('monthlyValue');
+  var elMonthlySub = document.getElementById('monthlySub');
+  var elTotalInterest = document.getElementById('totalInterest');
+  var elTotalRepay = document.getElementById('totalRepay');
+  var elInterestRatio = document.getElementById('interestRatio');
+  var elMsg = document.getElementById('loanMsg');
+
+  function setMsg(text, ok) {
+    elMsg.textContent = text;
+    elMsg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function fmtMoney(yuan) {
+    /* 金额展示：千分位，保留 2 位小数 */
+    var fixed = (Math.round(yuan * 100) / 100).toFixed(2);
+    var parts = fixed.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  }
+
+  function fmtWan(yuan) {
+    /* 以万元展示，保留 2 位小数 */
+    return (Math.round(yuan / 100) / 100).toFixed(2);
+  }
+
+  function getMode() {
+    var radios = document.getElementsByName('repayMode');
+    for (var i = 0; i < radios.length; i++) {
+      if (radios[i].checked) return radios[i].value;
+    }
+    return 'equal-installment';
+  }
+
+  /* 等额本息：返回固定月供与总利息 */
+  function calcEqualInstallment(principal, months, monthlyRate) {
+    if (monthlyRate === 0) {
+      var m = principal / months;
+      return { monthly: m, first: m, last: m, totalInterest: 0 };
+    }
+    var factor = Math.pow(1 + monthlyRate, months);
+    var monthly = principal * monthlyRate * factor / (factor - 1);
+    return { monthly: monthly, first: monthly, last: monthly, totalInterest: monthly * months - principal };
+  }
+
+  /* 等额本金：首月最高、逐月递减 */
+  function calcEqualPrincipal(principal, months, monthlyRate) {
+    var base = principal / months;
+    var first = base + principal * monthlyRate;
+    var last = base + base * monthlyRate;
+    var totalInterest = (months + 1) * principal * monthlyRate / 2;
+    return { first: first, last: last, totalInterest: totalInterest };
+  }
+
+  function calc() {
+    var amountWan = parseFloat(elAmount.value);
+    var years = parseInt(elYears.value, 10);
+    var rate = parseFloat(elRate.value);
+
+    if (isNaN(amountWan) || amountWan <= 0 || amountWan > 10000) {
+      elResult.style.display = 'none';
+      setMsg('请输入 1 ~ 10000 之间的贷款金额（万元）', false);
+      return;
+    }
+    if (isNaN(years) || years < 1 || years > 30) {
+      elResult.style.display = 'none';
+      setMsg('请输入 1 ~ 30 之间的贷款年限', false);
+      return;
+    }
+    if (isNaN(rate) || rate < 0 || rate > 24) {
+      elResult.style.display = 'none';
+      setMsg('请输入 0 ~ 24 之间的年利率（%）', false);
+      return;
+    }
+
+    var principal = amountWan * 10000;
+    var months = years * 12;
+    var monthlyRate = rate / 100 / 12;
+    var mode = getMode();
+
+    var installment = calcEqualInstallment(principal, months, monthlyRate);
+    var equalPrincipal = calcEqualPrincipal(principal, months, monthlyRate);
+
+    var chosen = mode === 'equal-installment' ? installment : equalPrincipal;
+    var totalInterest = chosen.totalInterest;
+    var totalRepay = principal + totalInterest;
+
+    if (mode === 'equal-installment') {
+      elMonthlyLabel.textContent = '每月还款';
+      elMonthlyValue.textContent = fmtMoney(chosen.monthly) + ' 元';
+      elMonthlySub.textContent = '每月还款额固定，共 ' + months + ' 期';
+    } else {
+      elMonthlyLabel.textContent = '首月还款';
+      elMonthlyValue.textContent = fmtMoney(chosen.first) + ' 元';
+      var decrease = principal / months * monthlyRate;
+      elMonthlySub.textContent = '此后每月递减 ' + fmtMoney(decrease) + ' 元，末月还款 ' +
+        fmtMoney(chosen.last) + ' 元，共 ' + months + ' 期';
+    }
+
+    elTotalInterest.textContent = fmtWan(totalInterest);
+    elTotalRepay.textContent = fmtWan(totalRepay);
+    elInterestRatio.textContent = (totalInterest / totalRepay * 100).toFixed(1) + '%';
+
+    /* 对比表 */
+    document.getElementById('cmpInstallmentMonthly').textContent = fmtMoney(installment.monthly);
+    document.getElementById('cmpInstallmentLast').textContent = fmtMoney(installment.monthly);
+    document.getElementById('cmpInstallmentInterest').textContent = fmtWan(installment.totalInterest);
+    document.getElementById('cmpPrincipalFirst').textContent = fmtMoney(equalPrincipal.first);
+    document.getElementById('cmpPrincipalLast').textContent = fmtMoney(equalPrincipal.last);
+    document.getElementById('cmpPrincipalInterest').textContent = fmtWan(equalPrincipal.totalInterest);
+
+    var saved = installment.totalInterest - equalPrincipal.totalInterest;
+    document.getElementById('compareTip').textContent =
+      '等额本金比等额本息少付利息约 ' + fmtWan(saved) + ' 万元，但首月月供高 ' +
+      fmtMoney(equalPrincipal.first - installment.monthly) + ' 元。';
+
+    elResult.style.display = '';
+    setMsg('✓ 贷款 ' + amountWan + ' 万元 · ' + years + ' 年 · 年利率 ' + rate + '%', true);
+  }
+
+  document.getElementById('btnCalc').addEventListener('click', calc);
+  elAmount.addEventListener('keydown', function (e) { if (e.key === 'Enter') calc(); });
+  elYears.addEventListener('keydown', function (e) { if (e.key === 'Enter') calc(); });
+  elRate.addEventListener('keydown', function (e) { if (e.key === 'Enter') calc(); });
+
+  var presets = document.querySelectorAll('.rate-preset');
+  for (var i = 0; i < presets.length; i++) {
+    presets[i].addEventListener('click', function () {
+      elRate.value = this.getAttribute('data-rate');
+      calc();
+    });
+  }
+
+  var radios = document.getElementsByName('repayMode');
+  for (var j = 0; j < radios.length; j++) {
+    radios[j].addEventListener('change', function () {
+      if (elAmount.value && elYears.value && elRate.value) calc();
+    });
+  }
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    elAmount.value = '';
+    elYears.value = '';
+    elRate.value = '';
+    elResult.style.display = 'none';
+    setMsg('', true);
+    elAmount.focus();
+  });
+
+  document.getElementById('btnCopyResult').addEventListener('click', function () {
+    var mode = getMode();
+    var text = '房贷计算结果\n' +
+      '贷款金额：' + elAmount.value + ' 万元\n' +
+      '贷款年限：' + elYears.value + ' 年\n' +
+      '年利率：' + elRate.value + '%\n' +
+      '还款方式：' + (mode === 'equal-installment' ? '等额本息' : '等额本金') + '\n' +
+      (mode === 'equal-installment'
+        ? '每月还款：' + elMonthlyValue.textContent
+        : '首月还款：' + elMonthlyValue.textContent + '（' + elMonthlySub.textContent + '）') + '\n' +
+      '总利息：' + elTotalInterest.textContent + ' 万元\n' +
+      '总还款额：' + elTotalRepay.textContent + ' 万元';
+    window.copyText(text);
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

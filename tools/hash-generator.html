@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>哈希计算 - 在线MD5/SHA1/SHA256/SHA512哈希生成工具 | 极简工具箱</title>
+<meta name="description" content="在线哈希计算工具：一键生成文本的 MD5、SHA-1、SHA-256、SHA-512 消息摘要，支持大写输出与中文。纯前端处理，数据不上传服务器，打开即用。">
+<meta name="keywords" content="MD5在线,SHA1,SHA256,SHA512,哈希计算,消息摘要,字符串哈希,哈希生成器">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "哈希计算工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "计算文本的 MD5、SHA-1、SHA-256、SHA-512 哈希值",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6360666557237693"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">哈希计算</h1>
+  <p class="page-desc">计算文本的 MD5 / SHA-1 / SHA-256 / SHA-512 哈希值，支持中文，纯前端处理</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="hashInput">输入文本</label>
+        <textarea id="hashInput" rows="6" spellcheck="false" placeholder="输入任意文本（支持中文），点击计算生成哈希值"></textarea>
+      </div>
+      <div class="field">
+        <label>选择算法</label>
+        <label class="checkbox-row"><input type="checkbox" name="alg" value="MD5" checked> MD5（128 位）</label>
+        <label class="checkbox-row"><input type="checkbox" name="alg" value="SHA-1" checked> SHA-1（160 位）</label>
+        <label class="checkbox-row"><input type="checkbox" name="alg" value="SHA-256" checked> SHA-256（256 位）</label>
+        <label class="checkbox-row"><input type="checkbox" name="alg" value="SHA-512" checked> SHA-512（512 位）</label>
+        <label class="checkbox-row"><input type="checkbox" id="chkUpper"> 大写输出</label>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnCalc" type="button">计算哈希</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+      <div id="hashResults"></div>
+      <p class="msg" id="hashMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>输入文本后点击「计算哈希」，勾选的每种算法各生成一行结果，可单独复制。文本统一按 UTF-8 编码处理，中文也能得到正确摘要。</p>
+        <p>SHA 系列由浏览器内置的 Web Crypto 引擎计算；MD5 为页面内置纯 JS 实现，任何环境均可使用。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>哈希值能还原成原文吗？</h3>
+    <p>不能。哈希是单向散列，任意长度的输入都会被压缩成固定长度的摘要，无法逆向还原。网上所谓"MD5 解密"只是对常见口令的穷举对照表。</p>
+    <h3>MD5 和 SHA-1 还能用吗？</h3>
+    <p>两者已被证实存在碰撞漏洞，不应再用于数字签名、密码存储等安全场景，只适合做内容指纹、文件校验等非安全用途。安全相关需求请选择 SHA-256 或更强的算法。</p>
+    <h3>为什么同一个中文文本在不同工具里哈希不一样？</h3>
+    <p>通常是字符编码不一致导致的。本工具统一按 UTF-8 计算，与主流命令行工具（如 md5sum、sha256sum）结果一致；若对方按 GBK 等其他编码计算，结果自然不同。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var input = document.getElementById('hashInput');
+  var resultsEl = document.getElementById('hashResults');
+  var msg = document.getElementById('hashMsg');
+
+  function setMsg(text, ok) {
+    msg.textContent = text;
+    msg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  /* ---------- UTF-8 字节转换（优先 TextEncoder，含兜底实现） ---------- */
+  function strToBytes(str) {
+    if (window.TextEncoder) return new TextEncoder().encode(str);
+    var bytes = [], i, c;
+    for (i = 0; i < str.length; i++) {
+      c = str.codePointAt(i);
+      if (c > 0xffff) i++;
+      if (c < 0x80) bytes.push(c);
+      else if (c < 0x800) bytes.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f));
+      else if (c < 0x10000) bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+      else bytes.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 0x3f), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+    }
+    return bytes;
+  }
+
+  /* ---------- MD5（纯 JS 实现，RFC 1321） ---------- */
+  function md5Bytes(bytes) {
+    var S = [
+      7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+      5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+      4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+      6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
+    ];
+    var K = [], i;
+    for (i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296);
+
+    function rotl(x, c) { return (x << c) | (x >>> (32 - c)); }
+
+    var len = bytes.length;
+    var padded = [];
+    for (i = 0; i < len; i++) padded.push(bytes[i]);
+    padded.push(0x80);
+    while (padded.length % 64 !== 56) padded.push(0);
+    var bitLen = len * 8;
+    var bitLenHi = Math.floor(len / 0x20000000);
+    padded.push(bitLen & 0xff, (bitLen >>> 8) & 0xff, (bitLen >>> 16) & 0xff, (bitLen >>> 24) & 0xff);
+    padded.push(bitLenHi & 0xff, (bitLenHi >>> 8) & 0xff, (bitLenHi >>> 16) & 0xff, (bitLenHi >>> 24) & 0xff);
+
+    var a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+
+    for (var offset = 0; offset < padded.length; offset += 64) {
+      var M = [], j;
+      for (j = 0; j < 16; j++) {
+        M[j] = padded[offset + j * 4] |
+          (padded[offset + j * 4 + 1] << 8) |
+          (padded[offset + j * 4 + 2] << 16) |
+          (padded[offset + j * 4 + 3] << 24);
+      }
+      var A = a0, B = b0, C = c0, D = d0;
+      for (i = 0; i < 64; i++) {
+        var F, g;
+        if (i < 16) { F = (B & C) | (~B & D); g = i; }
+        else if (i < 32) { F = (D & B) | (~D & C); g = (5 * i + 1) % 16; }
+        else if (i < 48) { F = B ^ C ^ D; g = (3 * i + 5) % 16; }
+        else { F = C ^ (B | ~D); g = (7 * i) % 16; }
+        F = (F + A + K[i] + M[g]) | 0;
+        A = D;
+        D = C;
+        C = B;
+        B = (B + rotl(F, S[i])) | 0;
+      }
+      a0 = (a0 + A) | 0;
+      b0 = (b0 + B) | 0;
+      c0 = (c0 + C) | 0;
+      d0 = (d0 + D) | 0;
+    }
+
+    function hexLE(x) {
+      var s = '', k;
+      for (k = 0; k < 4; k++) s += ('0' + ((x >>> (k * 8)) & 0xff).toString(16)).slice(-2);
+      return s;
+    }
+    return hexLE(a0) + hexLE(b0) + hexLE(c0) + hexLE(d0);
+  }
+
+  /* ---------- SHA 系列（Web Crypto） ---------- */
+  function shaHex(algo, bytes) {
+    return window.crypto.subtle.digest(algo, bytes).then(function (buf) {
+      var arr = new Uint8Array(buf), hex = '', i;
+      for (i = 0; i < arr.length; i++) hex += ('0' + arr[i].toString(16)).slice(-2);
+      return hex;
+    });
+  }
+
+  function getCheckedAlgs() {
+    var boxes = document.querySelectorAll('input[name="alg"]:checked');
+    var algs = [];
+    for (var i = 0; i < boxes.length; i++) algs.push(boxes[i].value);
+    return algs;
+  }
+
+  function addRow(alg) {
+    var field = document.createElement('div');
+    field.className = 'field';
+    var label = document.createElement('label');
+    label.textContent = alg;
+    var box = document.createElement('div');
+    box.className = 'result-box';
+    box.textContent = '计算中…';
+    var group = document.createElement('div');
+    group.className = 'btn-group';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-secondary';
+    btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      window.copyText(box.getAttribute('data-hash') || '');
+    });
+    group.appendChild(btn);
+    field.appendChild(label);
+    field.appendChild(box);
+    field.appendChild(group);
+    resultsEl.appendChild(field);
+    return box;
+  }
+
+  function fillRow(box, hex, upper) {
+    if (upper) hex = hex.toUpperCase();
+    box.textContent = hex;
+    box.setAttribute('data-hash', hex);
+  }
+
+  function calculate() {
+    resultsEl.innerHTML = '';
+    var text = input.value;
+    if (!text) { setMsg('请先输入要计算哈希的文本', false); return; }
+    var algs = getCheckedAlgs();
+    if (!algs.length) { setMsg('请至少勾选一种算法', false); return; }
+
+    var upper = document.getElementById('chkUpper').checked;
+    var bytes = strToBytes(text);
+    var pending = algs.length, failed = 0;
+
+    function finish() {
+      pending--;
+      if (pending === 0) {
+        setMsg(failed ? '部分算法计算失败（当前环境可能不支持 Web Crypto）' : '✓ 计算完成', !failed);
+      }
+    }
+
+    algs.forEach(function (alg) {
+      var box = addRow(alg);
+      if (alg === 'MD5') {
+        fillRow(box, md5Bytes(bytes), upper);
+        finish();
+      } else if (window.crypto && window.crypto.subtle) {
+        shaHex(alg, bytes).then(function (hex) {
+          fillRow(box, hex, upper);
+          finish();
+        }, function () {
+          box.textContent = '计算失败：当前环境不支持 ' + alg;
+          failed++;
+          finish();
+        });
+      } else {
+        box.textContent = '当前环境不支持 Web Crypto，无法计算 ' + alg;
+        failed++;
+        finish();
+      }
+    });
+  }
+
+  document.getElementById('btnCalc').addEventListener('click', calculate);
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    input.value = '';
+    resultsEl.innerHTML = '';
+    msg.textContent = '';
+    msg.className = 'msg';
+    input.focus();
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

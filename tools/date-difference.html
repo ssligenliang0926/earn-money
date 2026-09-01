@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日期天数计算 - 在线计算两个日期之间相差天数 | 极简工具箱</title>
+<meta name="description" content="免费在线日期天数计算工具：选择开始与结束日期即可算出相差天数，同时给出周数、月数估算与各自星期几，支持是否包含结束日。纯前端计算，数据不上传服务器。">
+<meta name="keywords" content="日期天数计算,日期差计算,两个日期相差天数,天数计算器,日期计算,相隔天数">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "日期天数计算工具",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "All",
+  "description": "计算两个日期之间相差的天数，并给出周数、月数估算与星期几",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6360666557237693"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">📅 日期天数计算</h1>
+  <p class="page-desc">选择开始与结束日期，计算两者之间相差的天数，附周数与月数估算</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="dateStart">开始日期</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input type="date" id="dateStart" style="flex:1;min-width:160px">
+          <button class="btn btn-secondary" id="btnStartToday" type="button">今天</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="dateEnd">结束日期</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input type="date" id="dateEnd" style="flex:1;min-width:160px">
+          <button class="btn btn-secondary" id="btnEndToday" type="button">今天</button>
+        </div>
+      </div>
+      <label class="checkbox-row"><input type="checkbox" id="includeEnd"> 计算时包含结束日（结果 +1 天）</label>
+      <div class="btn-group">
+        <button class="btn" id="btnCalc" type="button">计算天数</button>
+        <button class="btn btn-secondary" id="btnSwap" type="button">交换日期</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+
+      <div id="dateResult" style="display:none">
+        <div style="text-align:center;padding:8px 0 4px">
+          <div style="font-size:13px;color:var(--text-muted)">两个日期相差</div>
+          <div id="dayValue" style="font-size:44px;font-weight:700;line-height:1.2;color:var(--primary)"></div>
+          <div id="dayRange" style="font-size:13px;color:var(--text-muted);margin-top:4px"></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="num" id="weekValue">—</div>
+            <div class="label">周数（周 + 天）</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="monthValue">—</div>
+            <div class="label">月数估算</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="hourValue">—</div>
+            <div class="label">折合小时</div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="num" id="startWeek" style="font-size:16px">—</div>
+            <div class="label" id="startLabel">开始日期</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="endWeek" style="font-size:16px">—</div>
+            <div class="label" id="endLabel">结束日期</div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btnCopyResult" type="button">复制结果</button>
+        </div>
+      </div>
+      <p class="msg" id="dateMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>选择开始日期与结束日期后点击「计算天数」，即可得到两个日期之间相差的天数，同时给出周数、月数估算与折合小时。</p>
+        <p>默认按「不含结束日」计算，即从开始日期当天 0 点到结束日期当天 0 点的整天数；勾选「包含结束日」后结果自动加 1，适合统计含首尾的总天数（如假期、工期）。</p>
+        <p>日期基于 UTC 零点计算，不受夏令时与本地时区影响，结果稳定可靠。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>相差天数是怎么算的？</h3>
+    <p>默认计算两个日期零点之间的整天数。例如 2026-01-01 到 2026-01-10 相差 9 天；若勾选「包含结束日」则为 10 天，表示把首尾两天都算在内。</p>
+    <h3>月数估算准确吗？</h3>
+    <p>月数按平均每月 30.44 天估算（365.25 ÷ 12），仅作粗略参考。由于各月天数不同，精确的「几个月零几天」需结合具体日期判断。</p>
+    <h3>可以计算过去的日期吗？</h3>
+    <p>可以。本工具支持任意合法日期，无论过去还是未来。若结束日早于开始日，会自动按绝对值计算并提示先后顺序，也可点击「交换日期」调整。</p>
+    <h3>我的日期数据会被上传吗？</h3>
+    <p>不会。所有计算均在浏览器本地完成，可放心使用。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elStart = document.getElementById('dateStart');
+  var elEnd = document.getElementById('dateEnd');
+  var elInclude = document.getElementById('includeEnd');
+  var elResult = document.getElementById('dateResult');
+  var elDayValue = document.getElementById('dayValue');
+  var elDayRange = document.getElementById('dayRange');
+  var elWeek = document.getElementById('weekValue');
+  var elMonth = document.getElementById('monthValue');
+  var elHour = document.getElementById('hourValue');
+  var elStartWeek = document.getElementById('startWeek');
+  var elEndWeek = document.getElementById('endWeek');
+  var elStartLabel = document.getElementById('startLabel');
+  var elEndLabel = document.getElementById('endLabel');
+  var elMsg = document.getElementById('dateMsg');
+
+  var WEEK_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  /* 按 UTC 零点解析，避免夏令时误差 */
+  function parseDate(value) {
+    var parts = value.split('-');
+    if (parts.length !== 3) return null;
+    var y = +parts[0], m = +parts[1], d = +parts[2];
+    if (!y || !m || !d) return null;
+    var dt = new Date(Date.UTC(y, m - 1, d));
+    /* 校验日期是否合法（如 2 月 30 日会被进位） */
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+    return dt;
+  }
+
+  function fmtDate(dt) {
+    return dt.getUTCFullYear() + '-' + pad(dt.getUTCMonth() + 1) + '-' + pad(dt.getUTCDate());
+  }
+
+  function weekName(dt) {
+    return WEEK_NAMES[dt.getUTCDay()];
+  }
+
+  function setMsg(text, ok) {
+    elMsg.textContent = text;
+    elMsg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function fmtNum(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function calc() {
+    var s = parseDate(elStart.value);
+    var e = parseDate(elEnd.value);
+    if (!s) {
+      elResult.style.display = 'none';
+      setMsg('请选择有效的开始日期', false);
+      return;
+    }
+    if (!e) {
+      elResult.style.display = 'none';
+      setMsg('请选择有效的结束日期', false);
+      return;
+    }
+
+    var swapped = false;
+    if (e.getTime() < s.getTime()) {
+      var tmp = s; s = e; e = tmp;
+      swapped = true;
+    }
+
+    var diffDays = Math.round((e.getTime() - s.getTime()) / 86400000);
+    if (elInclude.checked) diffDays += 1;
+
+    var weeks = Math.floor(diffDays / 7);
+    var remain = diffDays % 7;
+    var months = diffDays / 30.44;
+
+    elDayValue.textContent = fmtNum(diffDays) + ' 天';
+    elDayRange.textContent = fmtDate(s) + '（' + weekName(s) + '） 至 ' + fmtDate(e) + '（' + weekName(e) + '）' +
+      (elInclude.checked ? ' · 含结束日' : '');
+
+    elWeek.textContent = weeks + ' 周' + (remain ? ' ' + remain + ' 天' : '');
+    elMonth.textContent = months.toFixed(1) + ' 个月';
+    elHour.textContent = fmtNum(diffDays * 24) + ' 小时';
+
+    elStartWeek.textContent = weekName(s);
+    elEndWeek.textContent = weekName(e);
+    elStartLabel.textContent = '开始日期 ' + fmtDate(s);
+    elEndLabel.textContent = '结束日期 ' + fmtDate(e);
+
+    elResult.style.display = '';
+    setMsg('✓ 计算完成' + (swapped ? '（已自动按先后顺序取绝对值）' : ''), true);
+  }
+
+  document.getElementById('btnCalc').addEventListener('click', calc);
+  elInclude.addEventListener('change', function () {
+    if (elStart.value && elEnd.value) calc();
+  });
+
+  document.getElementById('btnStartToday').addEventListener('click', function () {
+    elStart.value = todayStr();
+    if (elEnd.value) calc();
+  });
+  document.getElementById('btnEndToday').addEventListener('click', function () {
+    elEnd.value = todayStr();
+    if (elStart.value) calc();
+  });
+
+  document.getElementById('btnSwap').addEventListener('click', function () {
+    var t = elStart.value;
+    elStart.value = elEnd.value;
+    elEnd.value = t;
+    if (elStart.value && elEnd.value) calc();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    elStart.value = '';
+    elEnd.value = '';
+    elInclude.checked = false;
+    elResult.style.display = 'none';
+    setMsg('', true);
+    elStart.focus();
+  });
+
+  document.getElementById('btnCopyResult').addEventListener('click', function () {
+    var text = '日期天数计算结果\n' +
+      '开始日期：' + elStartLabel.textContent.replace('开始日期 ', '') + '\n' +
+      '结束日期：' + elEndLabel.textContent.replace('结束日期 ', '') + '\n' +
+      '相差天数：' + elDayValue.textContent + (elInclude.checked ? '（含结束日）' : '') + '\n' +
+      '周数：' + elWeek.textContent + '\n' +
+      '月数估算：' + elMonth.textContent;
+    window.copyText(text);
+  });
+
+  /* 初始默认填入今天，方便直接使用 */
+  elStart.value = todayStr();
+  elEnd.value = todayStr();
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

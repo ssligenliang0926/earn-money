@@ -38,7 +38,12 @@
     { file: 'http-status-codes.html',  name: 'HTTP 状态码',   icon: '🚦', desc: '60+ 状态码速查，中英文解释与分类筛选' },
     { file: 'cron-generator.html',     name: 'Cron 生成器',   icon: '⏰', desc: '可视化生成 Cron 表达式，附中文语义解读' },
     { file: 'bmi-calculator.html',     name: 'BMI 计算器',    icon: '⚖️', desc: '按中国成人标准判定体重等级与健康建议' },
-    { file: 'unit-converter.html',     name: '单位换算',      icon: '📐', desc: '长度/重量/温度等 8 大类单位一键换算' }
+    { file: 'unit-converter.html',     name: '单位换算',      icon: '📐', desc: '长度/重量/温度等 8 大类单位一键换算' },
+    { file: 'hash-generator.html',     name: '哈希计算',      icon: '#️⃣', desc: '一键生成文本的 MD5/SHA-1/SHA-256/SHA-512 摘要' },
+    { file: 'radix-converter.html',    name: '进制转换',      icon: '🔢', desc: '二进制/八进制/十进制/十六进制实时互转' },
+    { file: 'html-escape.html',        name: 'HTML 转义',     icon: '🛡️', desc: '文本与 HTML 实体互转，防 XSS 必备' },
+    { file: 'date-difference.html',    name: '日期天数计算',  icon: '📅', desc: '计算两个日期相差天数，附周数月数估算' },
+    { file: 'mortgage-calculator.html', name: '房贷计算器',   icon: '🏠', desc: '等额本息/等额本金月供与总利息对比计算' }
   ];
 
   function toolUrl(file) {

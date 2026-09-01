@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML 转义 - 在线HTML转义/反转义工具 | 极简工具箱</title>
+<meta name="description" content="在线HTML转义工具：文本一键转义为 HTML 实体（&amp;lt;、&amp;gt;、&amp;amp; 等），反转义还原实体为原文。防止 XSS 注入与标签错乱，纯前端处理，打开即用。">
+<meta name="keywords" content="HTML转义,HTML反转义,HTML实体编码,escape,unescape,XSS转义">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "HTML 转义工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "HTML 转义与反转义，文本与 HTML 实体互转",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6360666557237693"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">HTML 转义</h1>
+  <p class="page-desc">文本与 HTML 实体互转，转义可防止 XSS 注入与标签被浏览器解析，纯前端处理</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="htmlInput">输入文本 / HTML</label>
+        <textarea id="htmlInput" rows="8" spellcheck="false" placeholder="转义：输入包含 &lt; &gt; &amp; 等符号的文本；反转义：粘贴含 &amp;lt; &amp;amp; 等实体的内容"></textarea>
+      </div>
+      <div class="field">
+        <label class="checkbox-row"><input type="checkbox" id="chkQuote" checked> 同时转义单引号（' → &amp;#39;）</label>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnEscape" type="button">HTML 转义</button>
+        <button class="btn" id="btnUnescape" type="button">HTML 反转义</button>
+        <button class="btn btn-secondary" id="btnSwap" type="button">输入输出互换</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+      <div class="field">
+        <label for="htmlOutput">输出结果</label>
+        <textarea id="htmlOutput" rows="8" readonly spellcheck="false" placeholder="结果将显示在这里"></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnCopy" type="button">复制结果</button>
+      </div>
+      <p class="msg" id="htmlMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>「HTML 转义」把 &amp;、&lt;、&gt;、" （可选 '）转换为对应实体，转换后的文本可安全地直接显示在页面或填入属性中。</p>
+        <p>「HTML 反转义」把常见实体（&amp;amp;、&amp;lt;、&amp;gt;、&amp;quot;、&amp;#39;、&amp;apos; 及十六进制形式）还原为原字符；&amp;amp; 最后处理，避免二次解码。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>什么是 HTML 转义，为什么需要它？</h3>
+    <p>浏览器会把 &lt;、&gt; 等符号解析为标签。想在页面上原样显示代码或用户输入的内容，就必须先把这些符号转义成实体（如 &amp;lt;），否则内容会被当作标签解析而消失或错乱，恶意输入还可能引发 XSS 注入。</p>
+    <h3>转义和 URL 编码、Base64 有什么区别？</h3>
+    <p>三者目的不同：HTML 转义针对页面显示安全；URL 编码让文本能安全出现在网址中；Base64 是二进制与文本之间的编码方式。本工具只做 HTML 实体层面的转义与还原。</p>
+    <h3>反转义后的内容能直接插入页面吗？</h3>
+    <p>要谨慎。反转义会还原出真实的标签与脚本字符，若直接通过 innerHTML 等方式插入页面，等同于执行其中的 HTML，存在 XSS 风险。反转义主要用于阅读、编辑与调试源码。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var input = document.getElementById('htmlInput');
+  var output = document.getElementById('htmlOutput');
+  var msg = document.getElementById('htmlMsg');
+
+  function setMsg(text, ok) {
+    msg.textContent = text;
+    msg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function escapeHtml(text) {
+    var out = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+    if (document.getElementById('chkQuote').checked) {
+      out = out.replace(/'/g, '&#39;');
+    }
+    return out;
+  }
+
+  function unescapeHtml(text) {
+    return text
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#0?39;/g, "'")
+      .replace(/&#x0?27;/gi, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, '&');
+  }
+
+  document.getElementById('btnEscape').addEventListener('click', function () {
+    var text = input.value;
+    if (!text) { setMsg('请先输入要转义的文本', false); return; }
+    output.value = escapeHtml(text);
+    setMsg('✓ 转义完成', true);
+  });
+
+  document.getElementById('btnUnescape').addEventListener('click', function () {
+    var text = input.value;
+    if (!text) { setMsg('请先输入要反转义的文本', false); return; }
+    output.value = unescapeHtml(text);
+    setMsg('✓ 反转义完成', true);
+  });
+
+  document.getElementById('btnSwap').addEventListener('click', function () {
+    if (!output.value) { setMsg('输出为空，无法互换', false); return; }
+    input.value = output.value;
+    output.value = '';
+    msg.textContent = '';
+    msg.className = 'msg';
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    input.value = '';
+    output.value = '';
+    msg.textContent = '';
+    msg.className = 'msg';
+    input.focus();
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    window.copyText(output.value);
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>
