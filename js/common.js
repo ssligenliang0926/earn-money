@@ -33,7 +33,12 @@
     { file: 'regex-tester.html',       name: '正则测试',      icon: '🔍', desc: '正则表达式实时匹配、高亮与替换' },
     { file: 'rmb-uppercase.html',      name: '金额转大写',    icon: '💰', desc: '人民币金额一键转财务规范中文大写' },
     { file: 'qrcode-generator.html',   name: '二维码生成器',  icon: '🔳', desc: '实时生成二维码，支持中文，下载 PNG' },
-    { file: 'image-compressor.html',   name: '图片压缩',      icon: '🗜️', desc: '本地压缩图片体积，可调质量与尺寸' }
+    { file: 'image-compressor.html',   name: '图片压缩',      icon: '🗜️', desc: '本地压缩图片体积，可调质量与尺寸' },
+    { file: 'image-to-base64.html',    name: '图片转 Base64', icon: '🖼️', desc: '图片转 Data URL / CSS / HTML 多种格式' },
+    { file: 'http-status-codes.html',  name: 'HTTP 状态码',   icon: '🚦', desc: '60+ 状态码速查，中英文解释与分类筛选' },
+    { file: 'cron-generator.html',     name: 'Cron 生成器',   icon: '⏰', desc: '可视化生成 Cron 表达式，附中文语义解读' },
+    { file: 'bmi-calculator.html',     name: 'BMI 计算器',    icon: '⚖️', desc: '按中国成人标准判定体重等级与健康建议' },
+    { file: 'unit-converter.html',     name: '单位换算',      icon: '📐', desc: '长度/重量/温度等 8 大类单位一键换算' }
   ];
 
   function toolUrl(file) {

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP状态码查询 - 在线HTTP状态码速查表（含中文解释） | 极简工具箱</title>
+<meta name="description" content="在线HTTP状态码查询工具：收录 1xx~5xx 全部常用 HTTP 状态码，附英文原名与中文解释，支持按状态码、关键词实时搜索与分类筛选，点击即可复制。纯前端页面，打开即用。">
+<meta name="keywords" content="HTTP状态码,HTTP状态码查询,状态码速查,404,500,301重定向,状态码中文解释">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "HTTP状态码查询工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "HTTP 状态码速查，支持搜索与分类筛选，附中文解释",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<style>
+.sc-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.sc-filter-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+.sc-filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+.sc-filter-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.sc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sc-table th {
+  text-align: left;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.sc-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.sc-table tbody tr { cursor: pointer; transition: background .12s; }
+.sc-table tbody tr:hover { background: var(--primary-light); }
+.sc-code {
+  display: inline-block;
+  min-width: 44px;
+  text-align: center;
+  font-weight: 700;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: #fff;
+}
+.sc-1xx { background: #6b7280; }
+.sc-2xx { background: var(--success); }
+.sc-3xx { background: #0891b2; }
+.sc-4xx { background: #d97706; }
+.sc-5xx { background: var(--danger); }
+.sc-name { font-weight: 600; white-space: nowrap; }
+.sc-desc { color: var(--text-muted); font-size: 13px; }
+.sc-empty { text-align: center; color: var(--text-muted); padding: 32px 0; font-size: 14px; }
+.sc-count { font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+@media (max-width: 640px) {
+  .sc-table thead { display: none; }
+  .sc-table, .sc-table tbody, .sc-table tr, .sc-table td { display: block; width: 100%; }
+  .sc-table tr { padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .sc-table td { border: none; padding: 3px 10px; }
+}
+</style>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">🚦 HTTP 状态码查询</h1>
+  <p class="page-desc">HTTP 状态码速查表，支持按状态码 / 关键词实时搜索，点击任意一行复制状态码</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="scSearch">搜索状态码（如 404、重定向、超时）</label>
+        <input type="text" id="scSearch" placeholder="输入状态码、英文名或中文关键词，实时过滤" autocomplete="off">
+      </div>
+
+      <div class="sc-filters" id="scFilters">
+        <button class="sc-filter-btn active" data-cat="all" type="button">全部</button>
+        <button class="sc-filter-btn" data-cat="1" type="button">1xx 信息</button>
+        <button class="sc-filter-btn" data-cat="2" type="button">2xx 成功</button>
+        <button class="sc-filter-btn" data-cat="3" type="button">3xx 重定向</button>
+        <button class="sc-filter-btn" data-cat="4" type="button">4xx 客户端错误</button>
+        <button class="sc-filter-btn" data-cat="5" type="button">5xx 服务器错误</button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="sc-table">
+          <thead>
+            <tr><th>状态码</th><th>英文名称</th><th>中文解释</th></tr>
+          </thead>
+          <tbody id="scBody"></tbody>
+        </table>
+      </div>
+      <div class="sc-empty" id="scEmpty" style="display:none;">没有匹配的状态码</div>
+      <p class="sc-count" id="scCount"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>HTTP 状态码是服务器对客户端请求的三位数字响应，按首位数字分为五类：1xx 信息、2xx 成功、3xx 重定向、4xx 客户端错误、5xx 服务器错误。</p>
+        <p>在搜索框输入状态码数字、英文名（如 not found）或中文关键词（如 重定向、超时）即可实时过滤；点击上方分类按钮可快速定位某一类状态码。</p>
+        <p>点击表格任意一行即可复制该状态码数字，方便粘贴到文档或代码中。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>301 和 302 重定向有什么区别？</h3>
+    <p>301 表示资源已永久迁移，浏览器和搜索引擎会缓存新地址并传递权重，适合域名更换、HTTPS 切换；302 表示临时跳转，原地址仍被视为有效，适合短期活动页跳转。SEO 场景下用错会导致权重不传递。</p>
+    <h3>401 和 403 都是没权限，区别在哪？</h3>
+    <p>401 Unauthorized 表示"未认证"，即服务器不知道你是谁，提供有效凭证（登录、Token）后重试可能成功；403 Forbidden 表示"已认证但无权限"，即使重新登录也无法访问该资源。</p>
+    <h3>502 和 504 都是网关错误，怎么区分？</h3>
+    <p>502 Bad Gateway 是网关收到了上游服务器的无效响应（通常上游服务崩溃或返回异常）；504 Gateway Timeout 是网关在限定时间内没有等到上游响应（通常上游处理太慢或网络阻塞）。排查方向分别是上游服务健康度与超时/性能问题。</p>
+    <h3>429 状态码常见于什么场景？</h3>
+    <p>429 Too Many Requests 表示请求频率超过了服务器的限流阈值，常见于开放 API 的 QPS 限制。客户端应读取 Retry-After 响应头并实施退避重试，避免持续高频请求。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* code, 英文名, 中文解释 */
+  var CODES = [
+    [100, 'Continue', '继续。客户端应继续发送请求体，常见于 Expect: 100-continue 场景'],
+    [101, 'Switching Protocols', '切换协议。服务器同意客户端的协议升级请求，如 WebSocket 握手成功'],
+    [102, 'Processing', '处理中（WebDAV）。服务器已收到并正在处理请求，但尚无响应可用'],
+    [103, 'Early Hints', '早期提示。用于在最终响应前返回预加载资源等提示首部'],
+    [200, 'OK', '请求成功。最常见的成功响应，返回请求的资源或处理结果'],
+    [201, 'Created', '已创建。请求成功且服务器创建了新资源，常见于 POST 提交'],
+    [202, 'Accepted', '已接受。请求已被接受但尚未处理完成，常用于异步任务'],
+    [203, 'Non-Authoritative Information', '非权威信息。响应信息来自第三方副本，可能不完全准确'],
+    [204, 'No Content', '无内容。请求成功但没有返回体，常见于 DELETE、埋点上报'],
+    [205, 'Reset Content', '重置内容。请求成功，要求客户端重置表单视图'],
+    [206, 'Partial Content', '部分内容。成功返回资源的一部分，用于 Range 分段下载'],
+    [207, 'Multi-Status', '多状态（WebDAV）。响应体包含多个子请求的状态信息'],
+    [208, 'Already Reported', '已报告（WebDAV）。集合内成员的状态已在前面的响应中报告'],
+    [226, 'IM Used', '已使用 IM。服务器已完成对资源的 GET 请求，响应是一个或多个实例操作的结果'],
+    [300, 'Multiple Choices', '多种选择。请求的资源有多个表示，需客户端进一步选择'],
+    [301, 'Moved Permanently', '永久重定向。资源已永久迁移到新地址，浏览器与搜索引擎会缓存新地址'],
+    [302, 'Found', '临时重定向。资源临时位于新地址，原地址仍有效'],
+    [303, 'See Other', '查看其他。引导客户端用 GET 方法访问另一个地址，常用于 POST 后跳转'],
+    [304, 'Not Modified', '未修改。资源未变化，客户端可继续使用本地缓存，减少传输'],
+    [305, 'Use Proxy', '使用代理（已废弃）。请求的资源必须通过指定代理访问'],
+    [307, 'Temporary Redirect', '临时重定向。与 302 类似，但严格要求保持原请求方法不变'],
+    [308, 'Permanent Redirect', '永久重定向。与 301 类似，但严格要求保持原请求方法不变'],
+    [400, 'Bad Request', '错误请求。请求语法或参数有误，服务器无法理解'],
+    [401, 'Unauthorized', '未认证。请求缺少或无效的身份凭证，登录后重试可能成功'],
+    [402, 'Payment Required', '需要付款。预留状态码，部分服务用于付费墙场景'],
+    [403, 'Forbidden', '禁止访问。服务器理解请求但拒绝授权，重新登录也无法解决'],
+    [404, 'Not Found', '未找到。请求的资源不存在，或服务器不愿透露'],
+    [405, 'Method Not Allowed', '方法不允许。请求方法不被目标资源支持，如用 GET 访问仅支持 POST 的接口'],
+    [406, 'Not Acceptable', '不可接受。服务器无法根据请求的 Accept 首部返回匹配的内容'],
+    [407, 'Proxy Authentication Required', '代理认证。必须先通过代理的身份认证才能访问'],
+    [408, 'Request Timeout', '请求超时。客户端发送请求的时间超过了服务器等待上限'],
+    [409, 'Conflict', '冲突。请求与资源当前状态冲突，如重复提交、版本冲突'],
+    [410, 'Gone', '已删除。资源曾存在但已被永久移除，不再可用'],
+    [411, 'Length Required', '需要长度。请求必须包含 Content-Length 首部'],
+    [412, 'Precondition Failed', '前提条件失败。请求首部中的条件（如 If-Match）不满足'],
+    [413, 'Content Too Large', '内容过大。请求体超过服务器允许的上限，常见于上传大文件'],
+    [414, 'URI Too Long', 'URI 过长。请求地址超过服务器能处理的长度限制'],
+    [415, 'Unsupported Media Type', '媒体类型不支持。请求体的格式不被支持，如接口只收 JSON 却传了表单'],
+    [416, 'Range Not Satisfiable', '范围不满足。请求的 Range 范围超出资源实际大小'],
+    [417, 'Expectation Failed', '期望失败。服务器无法满足 Expect 首部的要求'],
+    [418, "I'm a Teapot", '我是茶壶（彩蛋）。1998 年愚人节玩笑定义，部分框架用于趣味限流'],
+    [421, 'Misdirected Request', '请求指向错误。服务器无法处理该请求的组合（常见于 HTTP/2 连接复用）'],
+    [422, 'Unprocessable Content', '无法处理。请求格式正确但语义有误，如参数校验不通过'],
+    [423, 'Locked', '已锁定（WebDAV）。资源被其他操作锁定'],
+    [424, 'Failed Dependency', '依赖失败（WebDAV）。请求因前序请求失败而无法完成'],
+    [425, 'Too Early', '过早。服务器不愿冒险处理可能被重放的请求'],
+    [426, 'Upgrade Required', '需要升级。客户端应切换到更高版本的协议（如 TLS、HTTP/2）'],
+    [428, 'Precondition Required', '要求前提条件。请求必须是条件式的，用于防止并发冲突'],
+    [429, 'Too Many Requests', '请求过多。触发限流，应降低请求频率并按 Retry-After 退避'],
+    [431, 'Request Header Fields Too Large', '请求头过大。首部字段总大小超过服务器限制'],
+    [451, 'Unavailable For Legal Reasons', '因法律原因不可用。资源因法律要求被屏蔽'],
+    [500, 'Internal Server Error', '服务器内部错误。服务端发生未预期的异常，最常见的 5xx 错误'],
+    [501, 'Not Implemented', '未实现。服务器不支持请求的方法或功能'],
+    [502, 'Bad Gateway', '网关错误。网关从上游服务器收到了无效响应，常见于上游服务崩溃'],
+    [503, 'Service Unavailable', '服务不可用。服务器过载或维护中，稍后重试可能恢复'],
+    [504, 'Gateway Timeout', '网关超时。网关在限定时间内未等到上游服务器的响应'],
+    [505, 'HTTP Version Not Supported', 'HTTP 版本不支持。服务器不支持请求所用的协议版本'],
+    [506, 'Variant Also Negotiates', '变体也在协商。服务器内部配置错误导致内容协商循环'],
+    [507, 'Insufficient Storage', '存储不足（WebDAV）。服务器没有足够空间完成请求'],
+    [508, 'Loop Detected', '检测到循环（WebDAV）。服务器处理请求时发现无限循环'],
+    [510, 'Not Extended', '未扩展。获取资源所需的策略未被满足'],
+    [511, 'Network Authentication Required', '需要网络认证。客户端需先认证才能访问网络，常见于公共 Wi-Fi 登录页']
+  ];
+
+  var elSearch = document.getElementById('scSearch');
+  var elBody = document.getElementById('scBody');
+  var elEmpty = document.getElementById('scEmpty');
+  var elCount = document.getElementById('scCount');
+  var elFilters = document.getElementById('scFilters');
+
+  var currentCat = 'all';
+
+  function catOf(code) { return String(Math.floor(code / 100)); }
+
+  function render() {
+    var kw = elSearch.value.trim().toLowerCase();
+    var list = CODES.filter(function (item) {
+      if (currentCat !== 'all' && catOf(item[0]) !== currentCat) return false;
+      if (!kw) return true;
+      return String(item[0]).indexOf(kw) !== -1 ||
+        item[1].toLowerCase().indexOf(kw) !== -1 ||
+        item[2].toLowerCase().indexOf(kw) !== -1;
+    });
+
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      html += '<tr data-code="' + c[0] + '" title="点击复制 ' + c[0] + '">' +
+        '<td><span class="sc-code sc-' + catOf(c[0]) + 'xx">' + c[0] + '</span></td>' +
+        '<td class="sc-name">' + c[1] + '</td>' +
+        '<td class="sc-desc">' + c[2] + '</td>' +
+        '</tr>';
+    }
+    elBody.innerHTML = html;
+    elEmpty.style.display = list.length ? 'none' : 'block';
+    elCount.textContent = '共 ' + list.length + ' 个状态码' + (kw ? '（已按关键词过滤）' : '');
+  }
+
+  elSearch.addEventListener('input', render);
+
+  elFilters.addEventListener('click', function (e) {
+    var btn = e.target.closest('.sc-filter-btn');
+    if (!btn) return;
+    currentCat = btn.getAttribute('data-cat');
+    var btns = elFilters.querySelectorAll('.sc-filter-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    btn.classList.add('active');
+    render();
+  });
+
+  elBody.addEventListener('click', function (e) {
+    var tr = e.target.closest('tr');
+    if (!tr) return;
+    window.copyText(tr.getAttribute('data-code'));
+  });
+
+  render();
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

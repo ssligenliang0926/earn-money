@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cron 表达式生成器 - 在线生成与解析定时任务 Cron 表达式 | 极简工具箱</title>
+<meta name="description" content="免费在线 Cron 表达式生成器：可视化生成每分钟、每小时、每天、每周、每月定时任务表达式，实时中文描述，支持解析已有表达式与常用示例一键填入，兼容 Linux crontab 等 5 字段标准格式。纯前端处理，数据不上传服务器。">
+<meta name="keywords" content="Cron表达式,Cron生成器,crontab,定时任务,Cron解析,周期任务表达式">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Cron 表达式生成器",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "可视化生成定时任务 Cron 表达式，实时中文描述与表达式解析",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">⏰ Cron 表达式生成器</h1>
+  <p class="page-desc">可视化生成定时任务 Cron 表达式，实时中文描述，支持解析已有表达式</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section>
+      <div class="panel" style="margin-bottom:16px">
+        <div class="field">
+          <label for="cronType">执行频率</label>
+          <select id="cronType">
+            <option value="every_minute">每分钟</option>
+            <option value="every_n_minutes">每 N 分钟</option>
+            <option value="hourly">每小时</option>
+            <option value="daily" selected>每天</option>
+            <option value="weekly">每周</option>
+            <option value="monthly">每月</option>
+            <option value="custom">自定义（手写 5 字段）</option>
+          </select>
+        </div>
+
+        <div class="field" id="rowN" style="display:none">
+          <label for="cronN">间隔分钟数（1-59）</label>
+          <input type="number" id="cronN" min="1" max="59" value="5">
+        </div>
+
+        <div class="field" id="rowTime">
+          <label id="timeLabel">执行时间（时 : 分）</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span id="hourWrap" style="flex:1;display:flex;align-items:center;gap:6px">
+              <select id="cronHour" style="flex:1"></select>
+              <span style="color:var(--text-muted);font-size:13px">时</span>
+            </span>
+            <span style="flex:1;display:flex;align-items:center;gap:6px">
+              <select id="cronMinute" style="flex:1"></select>
+              <span style="color:var(--text-muted);font-size:13px">分</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="field" id="rowWeek" style="display:none">
+          <label>执行星期</label>
+          <div id="cronWeek"></div>
+        </div>
+
+        <div class="field" id="rowDay" style="display:none">
+          <label for="cronDay">执行日期（每月几号）</label>
+          <select id="cronDay"></select>
+        </div>
+
+        <div class="field" id="customRow" style="display:none">
+          <label>自定义字段（分 / 时 / 日 / 月 / 周）</label>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1"><input type="text" id="cMin" value="*" title="分钟（0-59）" style="text-align:center" spellcheck="false"></div>
+            <div style="flex:1"><input type="text" id="cHour" value="*" title="小时（0-23）" style="text-align:center" spellcheck="false"></div>
+            <div style="flex:1"><input type="text" id="cDay" value="*" title="日期（1-31）" style="text-align:center" spellcheck="false"></div>
+            <div style="flex:1"><input type="text" id="cMon" value="*" title="月份（1-12）" style="text-align:center" spellcheck="false"></div>
+            <div style="flex:1"><input type="text" id="cWeek" value="*" title="星期（0-7，0 与 7 均为周日）" style="text-align:center" spellcheck="false"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Cron 表达式（5 字段：分 时 日 月 周）</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="result-box" id="cronResult" style="flex:1;min-width:200px"></div>
+            <button class="btn btn-secondary" id="btnCopyCron" type="button">复制表达式</button>
+          </div>
+        </div>
+        <p class="msg" id="cronDesc"></p>
+      </div>
+
+      <div class="panel">
+        <div class="field">
+          <label for="cronParseInput">解析已有表达式（输入 5 字段 Cron）</label>
+          <input type="text" id="cronParseInput" placeholder="例如 */5 * * * *" spellcheck="false">
+        </div>
+        <div class="btn-group">
+          <button class="btn" id="btnParse" type="button">解析</button>
+          <button class="btn btn-secondary" id="btnParseCopy" type="button">复制描述</button>
+        </div>
+        <p class="msg" id="parseMsg"></p>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于 Cron 表达式</h2>
+        <p>标准 Cron 表达式由 5 个字段组成，依次为：分钟（0-59）、小时（0-23）、日期（1-31）、月份（1-12）、星期（0-7，0 与 7 均表示周日），字段之间用空格分隔。</p>
+        <p>常用符号：<code>*</code> 表示任意值，<code>,</code> 分隔多个取值，<code>-</code> 表示范围，<code>/n</code> 表示每隔 n 个单位。例如 <code>*/5 * * * *</code> 表示每 5 分钟执行一次。</p>
+        <p>本工具生成的表达式兼容 Linux crontab、macOS launchd 配套 cron 及多数任务调度场景。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text" style="margin-bottom:16px">
+    <h2>常用 Cron 表达式（点击使用）</h2>
+    <div id="presetList" style="margin-top:12px"></div>
+  </section>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>5 字段和 6 字段、7 字段的 Cron 有什么区别？</h3>
+    <p>Linux crontab 使用 5 字段格式（分 时 日 月 周）。Spring Schedule 在最前面增加「秒」字段共 6 位，Quartz 还支持 7 位（含年份）。若目标框架使用 6 位格式，在本工具结果最前面补上秒数即可，例如 <code>0 0 9 * * *</code> 表示每天 9:00:00。</p>
+    <h3>日期和星期同时指定时是什么关系？</h3>
+    <p>在标准 cron 中，日期与星期同时非 <code>*</code> 时是「或」的关系：满足其中任意一个条件就会执行。如需「且」的语义，通常需要在任务脚本内自行判断。</p>
+    <h3>*/5 和 0-59/5 一样吗？</h3>
+    <p>效果相同，都表示从 0 开始每隔 5 个单位触发一次（0、5、10、…、55）。<code>*/n</code> 是 <code>全范围/n</code> 的简写形式。</p>
+    <h3>星期字段写 7 还是 0 表示周日？</h3>
+    <p>两者都合法，0 和 7 均表示周日。本工具生成时统一使用 0，解析时两者都支持。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var WEEK_CHARS = ['日', '一', '二', '三', '四', '五', '六'];
+
+  function weekName(v) { return WEEK_CHARS[v % 7]; }
+
+  /* ---------------- 字段校验 ---------------- */
+  function validateField(expr, min, max) {
+    if (!expr) return false;
+    var parts = expr.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i].trim();
+      var m;
+      if (p === '*') continue;
+      if ((m = p.match(/^\*\/(\d+)$/))) { if (+m[1] < 1) return false; continue; }
+      if ((m = p.match(/^(\d+)-(\d+)(?:\/(\d+))?$/))) {
+        var a = +m[1], b = +m[2];
+        if (a < min || a > max || b < min || b > max || a > b) return false;
+        if (m[3] !== undefined && +m[3] < 1) return false;
+        continue;
+      }
+      if (/^\d+$/.test(p)) { var v = +p; if (v < min || v > max) return false; continue; }
+      return false;
+    }
+    return true;
+  }
+
+  /* ---------------- 字段描述 ---------------- */
+  function describeField(expr, unit, everyUnit, isWeek) {
+    var parts = expr.split(',');
+    var out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i].trim();
+      var m;
+      if ((m = p.match(/^\*\/(\d+)$/))) {
+        out.push('每 ' + (+m[1]) + ' ' + everyUnit);
+      } else if ((m = p.match(/^(\d+)-(\d+)(?:\/(\d+))?$/))) {
+        var a = +m[1], b = +m[2];
+        var seg = isWeek ? ('周' + weekName(a) + '至周' + weekName(b)) : (a + ' 至 ' + b + ' ' + unit);
+        if (m[3] !== undefined) seg += '，每 ' + (+m[3]) + ' ' + everyUnit;
+        out.push(seg);
+      } else if (/^\d+$/.test(p)) {
+        var v = +p;
+        out.push(isWeek ? ('周' + weekName(v)) : (v + ' ' + unit));
+      } else {
+        return null;
+      }
+    }
+    return out.join('、');
+  }
+
+  function describeCron(raw) {
+    var f = raw.trim().split(/\s+/);
+    if (f.length !== 5) {
+      return { ok: false, text: 'Cron 表达式需要 5 个字段（分 时 日 月 周），当前为 ' + f.length + ' 个' };
+    }
+    var ranges = [[0, 59], [0, 23], [1, 31], [1, 12], [0, 7]];
+    var names = ['分钟', '小时', '日期', '月份', '星期'];
+    for (var i = 0; i < 5; i++) {
+      if (!validateField(f[i], ranges[i][0], ranges[i][1])) {
+        return { ok: false, text: '第 ' + (i + 1) + ' 个字段（' + names[i] + '）「' + f[i] + '」不合法' };
+      }
+    }
+    var minute = f[0], hour = f[1], day = f[2], month = f[3], week = f[4];
+    var parts = [];
+    parts.push(month === '*' ? '每月' : describeField(month, '月', '月', false));
+    if (day === '*' && week === '*') {
+      parts.push('每天');
+    } else {
+      if (day !== '*') parts.push(describeField(day, '日', '日', false));
+      if (week !== '*') parts.push(describeField(week, '', '天', true));
+    }
+    parts.push(hour === '*' ? '每小时' : describeField(hour, '点', '小时', false));
+    parts.push(minute === '*' ? '每分钟' : describeField(minute, '分', '分钟', false));
+    return { ok: true, text: parts.join(' ') };
+  }
+
+  /* ---------------- 生成器控件 ---------------- */
+  var elType = document.getElementById('cronType');
+  var elN = document.getElementById('cronN');
+  var elMinute = document.getElementById('cronMinute');
+  var elHour = document.getElementById('cronHour');
+  var elDay = document.getElementById('cronDay');
+  var weekBox = document.getElementById('cronWeek');
+  var customRow = document.getElementById('customRow');
+  var cMin = document.getElementById('cMin');
+  var cHour = document.getElementById('cHour');
+  var cDay = document.getElementById('cDay');
+  var cMon = document.getElementById('cMon');
+  var cWeek = document.getElementById('cWeek');
+  var elResult = document.getElementById('cronResult');
+  var elDesc = document.getElementById('cronDesc');
+  var currentExpr = '';
+
+  function fillSelect(sel, min, max) {
+    for (var i = min; i <= max; i++) {
+      var opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = i < 10 ? '0' + i : String(i);
+      sel.appendChild(opt);
+    }
+  }
+  fillSelect(elMinute, 0, 59);
+  fillSelect(elHour, 0, 23);
+  fillSelect(elDay, 1, 31);
+  elHour.value = '9';
+  elMinute.value = '0';
+
+  var WEEKS = [['周一', 1], ['周二', 2], ['周三', 3], ['周四', 4], ['周五', 5], ['周六', 6], ['周日', 0]];
+  WEEKS.forEach(function (w, idx) {
+    var lab = document.createElement('label');
+    lab.className = 'checkbox-row';
+    lab.style.display = 'inline-flex';
+    lab.style.marginRight = '12px';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = String(w[1]);
+    cb.checked = idx === 0;
+    cb.addEventListener('change', update);
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(' ' + w[0]));
+    weekBox.appendChild(lab);
+  });
+
+  function update() {
+    var t = elType.value;
+    document.getElementById('rowN').style.display = t === 'every_n_minutes' ? '' : 'none';
+    document.getElementById('rowTime').style.display =
+      (t === 'hourly' || t === 'daily' || t === 'weekly' || t === 'monthly') ? '' : 'none';
+    document.getElementById('hourWrap').style.display = t === 'hourly' ? 'none' : 'flex';
+    document.getElementById('timeLabel').textContent = t === 'hourly' ? '在第几分钟执行（每小时）' : '执行时间（时 : 分）';
+    document.getElementById('rowWeek').style.display = t === 'weekly' ? '' : 'none';
+    document.getElementById('rowDay').style.display = t === 'monthly' ? '' : 'none';
+    customRow.style.display = t === 'custom' ? '' : 'none';
+
+    var expr = '';
+    if (t === 'every_minute') {
+      expr = '* * * * *';
+    } else if (t === 'every_n_minutes') {
+      var n = parseInt(elN.value, 10);
+      if (isNaN(n) || n < 1) n = 1;
+      if (n > 59) n = 59;
+      expr = '*/' + n + ' * * * *';
+    } else if (t === 'hourly') {
+      expr = elMinute.value + ' * * * *';
+    } else if (t === 'daily') {
+      expr = elMinute.value + ' ' + elHour.value + ' * * *';
+    } else if (t === 'weekly') {
+      var ws = [];
+      var cbs = weekBox.querySelectorAll('input');
+      for (var i = 0; i < cbs.length; i++) if (cbs[i].checked) ws.push(+cbs[i].value);
+      if (ws.length === 0) {
+        currentExpr = '';
+        elResult.textContent = '—';
+        elDesc.textContent = '请至少勾选一个星期几';
+        elDesc.className = 'msg error';
+        return;
+      }
+      ws.sort(function (a, b) { return a - b; });
+      expr = elMinute.value + ' ' + elHour.value + ' * * ' + ws.join(',');
+    } else if (t === 'monthly') {
+      expr = elMinute.value + ' ' + elHour.value + ' ' + elDay.value + ' * *';
+    } else {
+      expr = [
+        cMin.value.trim() || '*',
+        cHour.value.trim() || '*',
+        cDay.value.trim() || '*',
+        cMon.value.trim() || '*',
+        cWeek.value.trim() || '*'
+      ].join(' ');
+    }
+
+    currentExpr = expr;
+    elResult.textContent = expr;
+    var d = describeCron(expr);
+    elDesc.textContent = d.ok ? '⏰ ' + d.text : d.text;
+    elDesc.className = 'msg ' + (d.ok ? 'success' : 'error');
+  }
+
+  elType.addEventListener('change', update);
+  elN.addEventListener('input', update);
+  elMinute.addEventListener('change', update);
+  elHour.addEventListener('change', update);
+  elDay.addEventListener('change', update);
+  [cMin, cHour, cDay, cMon, cWeek].forEach(function (el) {
+    el.addEventListener('input', update);
+  });
+
+  document.getElementById('btnCopyCron').addEventListener('click', function () {
+    window.copyText(currentExpr);
+  });
+
+  /* ---------------- 解析 ---------------- */
+  var parseInput = document.getElementById('cronParseInput');
+  var parseMsg = document.getElementById('parseMsg');
+  var lastParseText = '';
+
+  function doParse() {
+    var raw = parseInput.value.trim();
+    if (!raw) {
+      lastParseText = '';
+      parseMsg.textContent = '请输入 Cron 表达式';
+      parseMsg.className = 'msg error';
+      return;
+    }
+    var d = describeCron(raw);
+    lastParseText = d.ok ? d.text : '';
+    parseMsg.textContent = d.ok ? '⏰ ' + d.text : d.text;
+    parseMsg.className = 'msg ' + (d.ok ? 'success' : 'error');
+  }
+
+  document.getElementById('btnParse').addEventListener('click', doParse);
+  parseInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') doParse(); });
+  document.getElementById('btnParseCopy').addEventListener('click', function () {
+    window.copyText(lastParseText);
+  });
+
+  /* ---------------- 常用示例 ---------------- */
+  var PRESETS = [
+    '* * * * *',
+    '*/5 * * * *',
+    '0 * * * *',
+    '0 */2 * * *',
+    '0 9 * * *',
+    '0 9 * * 1-5',
+    '0 0 * * 6,0',
+    '30 8 1 * *',
+    '0 0 1 1 *'
+  ];
+
+  var presetList = document.getElementById('presetList');
+  PRESETS.forEach(function (expr) {
+    var d = describeCron(expr);
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;background:var(--bg)';
+    div.innerHTML =
+      '<code style="font-family:Consolas,Monaco,monospace;font-size:13px;color:var(--primary);min-width:110px">' + expr + '</code>' +
+      '<span style="font-size:13px;color:var(--text-muted)">' + (d.ok ? d.text : '') + '</span>';
+    div.addEventListener('click', function () {
+      var f = expr.split(' ');
+      cMin.value = f[0];
+      cHour.value = f[1];
+      cDay.value = f[2];
+      cMon.value = f[3];
+      cWeek.value = f[4];
+      elType.value = 'custom';
+      update();
+      window.toast('已填入：' + expr);
+    });
+    presetList.appendChild(div);
+  });
+
+  update();
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

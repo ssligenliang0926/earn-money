@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMI 计算器 - 在线身体质量指数计算与健康体重范围 | 极简工具箱</title>
+<meta name="description" content="免费在线 BMI 计算器：输入身高体重即可计算身体质量指数（BMI），按中国成人标准判断偏瘦、正常、超重与肥胖等级，并给出当前身高的健康体重范围。纯前端计算，数据不上传服务器。">
+<meta name="keywords" content="BMI计算器,BMI计算,身体质量指数,健康体重,体重指数,肥胖标准">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "BMI 计算器",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "All",
+  "description": "计算身体质量指数，按中国标准判断体重等级并给出健康体重范围",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">⚖️ BMI 计算器</h1>
+  <p class="page-desc">输入身高体重计算身体质量指数，按中国成人标准判断体重等级</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="bmiHeight">身高（厘米）</label>
+        <input type="number" id="bmiHeight" min="50" max="250" step="0.1" placeholder="例如 170" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label for="bmiWeight">体重（公斤）</label>
+        <input type="number" id="bmiWeight" min="10" max="500" step="0.1" placeholder="例如 65" inputmode="decimal">
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnCalc" type="button">计算 BMI</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+
+      <div id="bmiResult" style="display:none">
+        <div style="text-align:center;padding:8px 0 4px">
+          <div style="font-size:13px;color:var(--text-muted)">你的 BMI 指数</div>
+          <div id="bmiValue" style="font-size:44px;font-weight:700;line-height:1.2"></div>
+          <div id="bmiLevel" style="display:inline-block;padding:4px 16px;border-radius:999px;font-size:14px;margin-top:6px"></div>
+        </div>
+
+        <div style="margin:18px 0 6px">
+          <div style="display:flex;height:10px;border-radius:5px;overflow:hidden">
+            <div style="flex:45;background:#3b82f6" title="偏瘦 <18.5"></div>
+            <div style="flex:55;background:#16a34a" title="正常 18.5-23.9"></div>
+            <div style="flex:40;background:#f59e0b" title="超重 24-27.9"></div>
+            <div style="flex:120;background:#dc2626" title="肥胖 ≥28"></div>
+          </div>
+          <div style="position:relative;height:18px">
+            <div id="bmiPointer" style="position:absolute;top:0;transform:translateX(-50%);font-size:12px;color:var(--text-muted);white-space:nowrap">▲</div>
+          </div>
+          <div style="position:relative;height:16px;font-size:12px;color:var(--text-muted)">
+            <span style="position:absolute;left:0">14</span>
+            <span style="position:absolute;left:17.3%;transform:translateX(-50%)">18.5</span>
+            <span style="position:absolute;left:38.5%;transform:translateX(-50%)">24</span>
+            <span style="position:absolute;left:53.8%;transform:translateX(-50%)">28</span>
+            <span style="position:absolute;right:0">40</span>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">
+            <div class="num" id="bmiRange">—</div>
+            <div class="label">当前身高的健康体重（kg）</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="bmiDiff">—</div>
+            <div class="label">距离健康范围</div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btnCopyResult" type="button">复制结果</button>
+        </div>
+      </div>
+      <p class="msg" id="bmiMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于 BMI</h2>
+        <p>BMI（Body Mass Index，身体质量指数）= 体重（kg）÷ 身高²（m²），是国际上常用的衡量人体胖瘦程度与健康状况的指标。</p>
+        <p>中国成人标准（WS/T 428-2013）：BMI &lt; 18.5 为偏瘦，18.5 ~ 23.9 为正常，24 ~ 27.9 为超重，≥ 28 为肥胖。</p>
+        <p>BMI 不区分肌肉与脂肪，运动员、孕妇、未成年人及老年人请结合体脂率等指标综合判断，本工具结果仅供参考，不构成医疗建议。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text" style="margin-bottom:16px">
+    <h2>BMI 等级对照表（中国成人标准）</h2>
+    <table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:14px">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);color:var(--text-muted)">
+          <th style="text-align:left;padding:8px">分类</th>
+          <th style="text-align:left;padding:8px">BMI 范围</th>
+          <th style="text-align:left;padding:8px">建议</th>
+        </tr>
+      </thead>
+      <tbody style="color:var(--text-muted)">
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">偏瘦</td><td style="padding:8px">&lt; 18.5</td><td style="padding:8px">注意营养均衡，适当增重</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">正常</td><td style="padding:8px">18.5 ~ 23.9</td><td style="padding:8px">保持良好生活习惯</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">超重</td><td style="padding:8px">24 ~ 27.9</td><td style="padding:8px">控制饮食，增加运动</td></tr>
+        <tr><td style="padding:8px">肥胖</td><td style="padding:8px">≥ 28</td><td style="padding:8px">建议就医评估，科学减重</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>BMI 多少算正常？</h3>
+    <p>按中国成人标准，BMI 在 18.5 ~ 23.9 之间属于正常范围。例如身高 170cm 的人，健康体重大约在 53.5 ~ 69.1 公斤之间。世界卫生组织（WHO）标准的正常上限为 24.9，中国标准更为严格。</p>
+    <h3>BMI 能准确反映胖瘦吗？</h3>
+    <p>BMI 只考虑身高和体重，无法区分肌肉与脂肪。肌肉发达的健身人群 BMI 可能偏高但体脂率很低；老年人肌肉流失时 BMI 正常也可能存在健康风险。建议结合腰围、体脂率等指标综合判断。</p>
+    <h3>儿童和青少年适用这个标准吗？</h3>
+    <p>不适用。未成年人处于生长发育期，需使用按年龄、性别划分的 BMI 百分位曲线来评估，请咨询儿科医生或使用专门的儿童生长曲线工具。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elHeight = document.getElementById('bmiHeight');
+  var elWeight = document.getElementById('bmiWeight');
+  var elResult = document.getElementById('bmiResult');
+  var elValue = document.getElementById('bmiValue');
+  var elLevel = document.getElementById('bmiLevel');
+  var elPointer = document.getElementById('bmiPointer');
+  var elRange = document.getElementById('bmiRange');
+  var elDiff = document.getElementById('bmiDiff');
+  var elMsg = document.getElementById('bmiMsg');
+
+  var LEVELS = [
+    { max: 18.5, name: '偏瘦', color: '#3b82f6', bg: 'rgba(59,130,246,.12)' },
+    { max: 24,   name: '正常', color: '#16a34a', bg: 'rgba(22,163,74,.12)' },
+    { max: 28,   name: '超重', color: '#f59e0b', bg: 'rgba(245,158,11,.12)' },
+    { max: Infinity, name: '肥胖', color: '#dc2626', bg: 'rgba(220,38,38,.12)' }
+  ];
+
+  function fmt(n, digits) {
+    return (Math.round(n * Math.pow(10, digits)) / Math.pow(10, digits)).toFixed(digits);
+  }
+
+  function setMsg(text, ok) {
+    elMsg.textContent = text;
+    elMsg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function calc() {
+    var h = parseFloat(elHeight.value);
+    var w = parseFloat(elWeight.value);
+    if (isNaN(h) || h < 50 || h > 250) {
+      elResult.style.display = 'none';
+      setMsg('请输入 50 ~ 250 之间的身高（厘米）', false);
+      return;
+    }
+    if (isNaN(w) || w < 10 || w > 500) {
+      elResult.style.display = 'none';
+      setMsg('请输入 10 ~ 500 之间的体重（公斤）', false);
+      return;
+    }
+
+    var m = h / 100;
+    var bmi = w / (m * m);
+
+    var level = LEVELS[LEVELS.length - 1];
+    for (var i = 0; i < LEVELS.length; i++) {
+      if (bmi < LEVELS[i].max) { level = LEVELS[i]; break; }
+    }
+
+    elValue.textContent = fmt(bmi, 1);
+    elValue.style.color = level.color;
+    elLevel.textContent = level.name;
+    elLevel.style.color = level.color;
+    elLevel.style.background = level.bg;
+
+    /* 指针位置：刻度 14 ~ 40 线性映射 */
+    var pos = (Math.min(Math.max(bmi, 14), 40) - 14) / (40 - 14) * 100;
+    elPointer.style.left = pos + '%';
+    elPointer.style.color = level.color;
+
+    var minW = 18.5 * m * m;
+    var maxW = 23.9 * m * m;
+    elRange.textContent = fmt(minW, 1) + ' ~ ' + fmt(maxW, 1);
+
+    if (w < minW) {
+      elDiff.textContent = '还需增重 ' + fmt(minW - w, 1) + ' kg';
+    } else if (w > maxW) {
+      elDiff.textContent = '还需减重 ' + fmt(w - maxW, 1) + ' kg';
+    } else {
+      elDiff.textContent = '已在健康范围内';
+    }
+
+    elResult.style.display = '';
+    setMsg('✓ 身高 ' + fmt(h, 1) + ' cm，体重 ' + fmt(w, 1) + ' kg', true);
+  }
+
+  document.getElementById('btnCalc').addEventListener('click', calc);
+  elHeight.addEventListener('keydown', function (e) { if (e.key === 'Enter') calc(); });
+  elWeight.addEventListener('keydown', function (e) { if (e.key === 'Enter') calc(); });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    elHeight.value = '';
+    elWeight.value = '';
+    elResult.style.display = 'none';
+    setMsg('', true);
+    elHeight.focus();
+  });
+
+  document.getElementById('btnCopyResult').addEventListener('click', function () {
+    var text = 'BMI 计算结果\n' +
+      '身高：' + elHeight.value + ' cm\n' +
+      '体重：' + elWeight.value + ' kg\n' +
+      'BMI 指数：' + elValue.textContent + '\n' +
+      '体重等级：' + elLevel.textContent + '（中国成人标准）\n' +
+      '健康体重范围：' + elRange.textContent + ' kg';
+    window.copyText(text);
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片转Base64 - 在线将图片转换为Base64编码（Data URL） | 极简工具箱</title>
+<meta name="description" content="在线图片转Base64工具：将 JPG、PNG、GIF、WebP 等图片一键转换为 Base64 编码，支持 Data URL、纯 Base64、CSS 背景、HTML img 标签多种输出格式。纯前端处理，图片不上传服务器，打开即用。">
+<meta name="keywords" content="图片转Base64,图片Base64编码,Base64图片转换,图片转Data URL,在线图片Base64,CSS背景Base64">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "图片转Base64工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "将图片转换为 Base64 编码，支持 Data URL、CSS、HTML 多种输出格式",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">🖼️ 图片转 Base64</h1>
+  <p class="page-desc">将图片转换为 Base64 编码，支持 Data URL、CSS 背景、HTML 标签多种输出，图片不上传</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label>选择图片（点击或拖拽到下方区域）</label>
+        <div id="ibDrop" style="border:2px dashed var(--border);border-radius:8px;padding:32px 16px;text-align:center;color:var(--text-muted);cursor:pointer;background:var(--bg);">
+          <div style="font-size:32px;margin-bottom:8px;">🖼️</div>
+          <div>点击选择图片，或将图片拖拽到这里</div>
+          <div style="font-size:12px;margin-top:6px;">支持 JPG、PNG、GIF、WebP、SVG、ICO 等，建议小于 2 MB</div>
+        </div>
+        <input type="file" id="ibFile" accept="image/*" style="display:none;">
+      </div>
+
+      <div id="ibResult" style="display:none;">
+        <div class="stats">
+          <div class="stat-card"><div class="num" id="statName">-</div><div class="label">文件名</div></div>
+          <div class="stat-card"><div class="num" id="statType">-</div><div class="label">MIME 类型</div></div>
+          <div class="stat-card"><div class="num" id="statSize">-</div><div class="label">原始体积</div></div>
+          <div class="stat-card"><div class="num" id="statB64Size">-</div><div class="label">Base64 体积</div></div>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <label>图片预览</label>
+          <div style="display:flex;justify-content:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;">
+            <img id="ibPreview" alt="图片预览" style="max-width:100%;max-height:240px;">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="ibFormat">输出格式</label>
+          <select id="ibFormat">
+            <option value="dataurl" selected>Data URL（data:image/xxx;base64,...）</option>
+            <option value="pure">纯 Base64（不含前缀）</option>
+            <option value="css">CSS 背景图（background-image: url(...)）</option>
+            <option value="html">HTML img 标签（&lt;img src="..."&gt;）</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="ibOutput">转换结果</label>
+          <textarea id="ibOutput" rows="8" readonly spellcheck="false" placeholder="Base64 结果将显示在这里"></textarea>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" id="btnCopy" type="button">复制结果</button>
+          <button class="btn btn-secondary" id="btnClear" type="button">清空重选</button>
+        </div>
+      </div>
+
+      <p class="msg" id="ibMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>选择或拖入图片后，工具立即在浏览器本地将图片读取为 Base64 编码，并生成带 MIME 前缀的 Data URL，可直接嵌入 HTML、CSS 或 JSON 中使用。</p>
+        <p>切换「输出格式」可获得不同用途的片段：Data URL 适合直接粘贴；CSS 格式自动包裹 background-image 语句；HTML 格式生成完整的 img 标签。</p>
+        <p>Base64 编码后体积约增大 33%，建议仅对小图标、小图片使用内联 Base64，大图仍建议使用独立文件引用。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>图片转 Base64 后体积为什么会变大？</h3>
+    <p>Base64 用 4 个可打印字符表示 3 个字节，因此编码后体积约为原始的 4/3 倍（增大 33% 左右），再加上 data:image/png;base64, 前缀。这是编码原理决定的，属于正常现象。</p>
+    <h3>Data URL 可以直接用在哪些地方？</h3>
+    <p>可以直接作为 HTML 中 img 标签的 src、CSS 中 background-image 的 url()、以及 JSON 数据中传递图片内容，无需额外请求图片文件，适合小图标和需要单文件分发的场景。</p>
+    <h3>我的图片会被上传到服务器吗？</h3>
+    <p>不会。转换全程使用浏览器 FileReader 在本地完成，图片只存在于当前页面内存中，关闭页面即释放，不会发送到任何服务器。</p>
+    <h3>转换大图片会卡吗？</h3>
+    <p>Base64 字符串很长时，复制和渲染会消耗较多内存。建议仅对 2 MB 以内的小图使用本工具；大图请先用「图片压缩」工具减小体积后再转换。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elDrop = document.getElementById('ibDrop');
+  var elFile = document.getElementById('ibFile');
+  var elResult = document.getElementById('ibResult');
+  var elPreview = document.getElementById('ibPreview');
+  var elFormat = document.getElementById('ibFormat');
+  var elOutput = document.getElementById('ibOutput');
+  var elMsg = document.getElementById('ibMsg');
+
+  var dataUrl = '';     /* 完整的 data:xxx;base64,... 字符串 */
+  var pureB64 = '';     /* 不含前缀的纯 Base64 */
+  var mime = '';
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function showMsg(text, isError) {
+    elMsg.textContent = text;
+    elMsg.className = isError ? 'msg error' : 'msg success';
+  }
+
+  function clearMsg() {
+    elMsg.textContent = '';
+    elMsg.className = 'msg';
+  }
+
+  function renderOutput() {
+    if (!dataUrl) return;
+    var fmt = elFormat.value;
+    if (fmt === 'pure') {
+      elOutput.value = pureB64;
+    } else if (fmt === 'css') {
+      elOutput.value = 'background-image: url("' + dataUrl + '");';
+    } else if (fmt === 'html') {
+      elOutput.value = '<img src="' + dataUrl + '" alt="image">';
+    } else {
+      elOutput.value = dataUrl;
+    }
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    if (file.type.indexOf('image/') !== 0) {
+      showMsg('请选择图片文件', true);
+      return;
+    }
+    clearMsg();
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      dataUrl = e.target.result;
+      var idx = dataUrl.indexOf(',');
+      pureB64 = idx >= 0 ? dataUrl.substring(idx + 1) : dataUrl;
+      mime = file.type || 'image/*';
+
+      elPreview.src = dataUrl;
+      document.getElementById('statName').textContent = file.name.length > 14 ? file.name.substring(0, 12) + '…' : file.name;
+      document.getElementById('statName').title = file.name;
+      document.getElementById('statType').textContent = mime;
+      document.getElementById('statSize').textContent = formatBytes(file.size);
+      document.getElementById('statB64Size').textContent = formatBytes(pureB64.length);
+      elResult.style.display = 'block';
+      renderOutput();
+      showMsg('✓ 转换成功，Base64 长度 ' + pureB64.length + ' 字符', false);
+    };
+    reader.onerror = function () {
+      showMsg('图片读取失败，文件可能已损坏', true);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  elDrop.addEventListener('click', function () { elFile.click(); });
+  elFile.addEventListener('change', function () { loadFile(elFile.files[0]); });
+
+  elDrop.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    elDrop.style.borderColor = 'var(--primary)';
+  });
+  elDrop.addEventListener('dragleave', function () {
+    elDrop.style.borderColor = 'var(--border)';
+  });
+  elDrop.addEventListener('drop', function (e) {
+    e.preventDefault();
+    elDrop.style.borderColor = 'var(--border)';
+    if (e.dataTransfer.files.length > 0) loadFile(e.dataTransfer.files[0]);
+  });
+
+  elFormat.addEventListener('change', renderOutput);
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    window.copyText(elOutput.value);
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    dataUrl = '';
+    pureB64 = '';
+    mime = '';
+    elFile.value = '';
+    elOutput.value = '';
+    elPreview.removeAttribute('src');
+    elResult.style.display = 'none';
+    clearMsg();
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>
