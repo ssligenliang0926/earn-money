@@ -1,0 +1,11 @@
+node_modules/
+.npm-cache/
+.vercel-data/
+.vercel-cache/
+.vercel-config/
+.gh-config/
+gh-cli/
+gh.zip
+package.json
+package-lock.json
+*.png

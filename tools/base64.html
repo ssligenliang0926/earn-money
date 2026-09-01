@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base64 编解码 - 在线Base64编码解码工具（支持中文） | 极简工具箱</title>
+<meta name="description" content="在线Base64编码解码工具：文本一键转Base64、Base64还原为文本，完美支持中文与emoji。纯前端处理，数据不上传服务器，打开即用。">
+<meta name="keywords" content="Base64编码,Base64解码,Base64在线,图片Base64,中文Base64,Base64转换">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Base64 编解码工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "文本 Base64 编码与解码，完美支持中文",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">Base64 编解码</h1>
+  <p class="page-desc">文本与 Base64 互转，完美支持中文与 emoji，纯前端处理</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="b64Input">输入文本 / Base64</label>
+        <textarea id="b64Input" rows="8" spellcheck="false" placeholder="编码：输入任意文本（支持中文）；解码：粘贴 Base64 字符串"></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnEncode" type="button">Base64 编码</button>
+        <button class="btn" id="btnDecode" type="button">Base64 解码</button>
+        <button class="btn btn-secondary" id="btnSwap" type="button">输入输出互换</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+      <div class="field">
+        <label for="b64Output">输出结果</label>
+        <textarea id="b64Output" rows="8" readonly spellcheck="false" placeholder="结果将显示在这里"></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnCopy" type="button">复制结果</button>
+      </div>
+      <p class="msg" id="b64Msg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>「Base64 编码」把文本按 UTF-8 转为 Base64 字符串；「Base64 解码」把 Base64 还原为原文。中文、emoji 均可正确处理。</p>
+        <p>解码时工具会自动忽略换行与空白；若内容不是合法的 Base64，会给出明确错误提示。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>为什么中文编码后是一长串字母数字？</h3>
+    <p>Base64 只能表示 64 个 ASCII 字符，因此任何文本都会先按 UTF-8 转成字节序列再编码。一个中文字符占 3 个字节，编码后变成 4 个 Base64 字符，属于正常现象。</p>
+    <h3>解码报错「不是有效的 Base64」怎么办？</h3>
+    <p>请检查内容是否被截断、是否混入了非法字符。Base64 只包含 A-Z、a-z、0-9、+、/ 以及结尾的 =，URL 安全变体使用 - 和 _，本工具两种都能解码。</p>
+    <h3>Base64 是加密吗？</h3>
+    <p>不是。Base64 只是编码方式，任何人都可以无损还原原文，切勿用它来"加密"密码或敏感数据。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var input = document.getElementById('b64Input');
+  var output = document.getElementById('b64Output');
+  var msg = document.getElementById('b64Msg');
+
+  function setMsg(text, ok) {
+    msg.textContent = text;
+    msg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  /* ---------- UTF-8 字节互转（优先 TextEncoder，含兜底实现） ---------- */
+  function strToBytes(str) {
+    if (window.TextEncoder) return new TextEncoder().encode(str);
+    var bytes = [], i, c;
+    for (i = 0; i < str.length; i++) {
+      c = str.codePointAt(i);
+      if (c > 0xffff) i++;
+      if (c < 0x80) bytes.push(c);
+      else if (c < 0x800) bytes.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f));
+      else if (c < 0x10000) bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+      else bytes.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 0x3f), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+    }
+    return bytes;
+  }
+
+  function bytesToStr(bytes) {
+    if (window.TextDecoder) return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    var str = '', i, b1, b2, b3, b4;
+    for (i = 0; i < bytes.length;) {
+      b1 = bytes[i++];
+      if (b1 < 0x80) { str += String.fromCharCode(b1); }
+      else if (b1 < 0xe0) { str += String.fromCharCode(((b1 & 0x1f) << 6) | (bytes[i++] & 0x3f)); }
+      else if (b1 < 0xf0) {
+        b2 = bytes[i++];
+        str += String.fromCharCode(((b1 & 0x0f) << 12) | ((b2 & 0x3f) << 6) | (bytes[i++] & 0x3f));
+      } else {
+        b2 = bytes[i++]; b3 = bytes[i++]; b4 = bytes[i++];
+        var cp = ((b1 & 0x07) << 18) | ((b2 & 0x3f) << 12) | ((b3 & 0x3f) << 6) | (b4 & 0x3f);
+        cp -= 0x10000;
+        str += String.fromCharCode(0xd800 + (cp >> 10), 0xdc00 + (cp & 0x3ff));
+      }
+    }
+    return str;
+  }
+
+  /* ---------- 编码 / 解码 ---------- */
+  function encode() {
+    var text = input.value;
+    if (!text) { setMsg('请先输入要编码的文本', false); return; }
+    try {
+      var bytes = strToBytes(text);
+      var bin = '';
+      for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      output.value = btoa(bin);
+      setMsg('✓ 编码成功，输出长度 ' + output.value.length + ' 字符', true);
+    } catch (e) {
+      output.value = '';
+      setMsg('编码失败：' + e.message, false);
+    }
+  }
+
+  function decode() {
+    var raw = input.value.replace(/[\s\r\n]/g, '');
+    if (!raw) { setMsg('请先输入要解码的 Base64', false); return; }
+    /* 兼容 URL 安全变体：- → +，_ → / */
+    var b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4 !== 0) b64 += '=';
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) {
+      setMsg('解码失败：包含非法字符，不是有效的 Base64', false);
+      return;
+    }
+    try {
+      var bin = atob(b64);
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      output.value = bytesToStr(bytes);
+      setMsg('✓ 解码成功', true);
+    } catch (e) {
+      output.value = '';
+      setMsg('解码失败：Base64 内容不合法或已损坏', false);
+    }
+  }
+
+  document.getElementById('btnEncode').addEventListener('click', encode);
+  document.getElementById('btnDecode').addEventListener('click', decode);
+
+  document.getElementById('btnSwap').addEventListener('click', function () {
+    var tmp = input.value;
+    input.value = output.value;
+    output.value = tmp;
+    msg.textContent = '';
+    msg.className = 'msg';
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    input.value = '';
+    output.value = '';
+    msg.textContent = '';
+    msg.className = 'msg';
+    input.focus();
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    window.copyText(output.value);
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

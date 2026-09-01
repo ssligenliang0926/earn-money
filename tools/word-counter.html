@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字数统计 - 在线实时统计字符数、字数、行数 | 极简工具箱</title>
+<meta name="description" content="免费在线字数统计工具，实时统计字符数（含/不含空格）、字数、行数、段落数，中英混排准确计数，支持一键清空与复制，全程本地计算，数据不离开浏览器。">
+<meta name="keywords" content="字数统计,字符统计,在线字数统计,字数统计工具,字符数统计">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "字数统计工具",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "All",
+  "description": "字符数、字数、行数实时统计，中英混排准确",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">📝 字数统计</h1>
+  <p class="page-desc">字符数、字数、行数实时统计，中英混排准确</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="wcInput">输入或粘贴文本</label>
+        <textarea id="wcInput" rows="10" placeholder="在此输入或粘贴需要统计的文字内容…"></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="btnCopy" type="button">复制文本</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card"><div class="num" id="statChars">0</div><div class="label">字符数</div></div>
+        <div class="stat-card"><div class="num" id="statCharsNoSpace">0</div><div class="label">字符数（不含空格）</div></div>
+        <div class="stat-card"><div class="num" id="statWords">0</div><div class="label">字数</div></div>
+        <div class="stat-card"><div class="num" id="statLines">0</div><div class="label">行数</div></div>
+        <div class="stat-card"><div class="num" id="statParagraphs">0</div><div class="label">段落数</div></div>
+        <div class="stat-card"><div class="num" id="statCn">0</div><div class="label">中文字数</div></div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于字数统计</h2>
+        <p>本工具适合写作、文案、论文、微博/公众号排版等场景，输入即实时统计，无需点击按钮。</p>
+        <p>统计规则：中文字符每个计 1 字；连续的英文字母与数字按单词计 1 字（如 "hello123" 计 1 字）；行数按换行符统计，段落数按非空行统计。</p>
+        <p>所有计算均在你的浏览器本地完成，输入的文字不会上传到任何服务器。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>「字数」是怎么计算的？</h3>
+    <p>中文字符每个计 1 字；连续的英文字母与数字按单词计 1 字，例如 "hello123" 计 1 字、"I love 中国" 计 4 字。这种规则与 Word 等主流软件的统计口径接近。</p>
+    <h3>行数和段落数有什么区别？</h3>
+    <p>行数按换行符统计（包含空行），段落数只统计非空行。例如一段文字中间有一个空行，行数为 3 而段落数为 2。</p>
+    <h3>我的文字内容会被上传吗？</h3>
+    <p>不会。统计完全在浏览器本地实时完成，输入的文字不会发送到任何服务器，可放心粘贴敏感内容。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elInput = document.getElementById('wcInput');
+  var elChars = document.getElementById('statChars');
+  var elCharsNoSpace = document.getElementById('statCharsNoSpace');
+  var elWords = document.getElementById('statWords');
+  var elLines = document.getElementById('statLines');
+  var elParagraphs = document.getElementById('statParagraphs');
+  var elCn = document.getElementById('statCn');
+
+  function countWords(text) {
+    if (!text) return 0;
+    var count = 0;
+    // 中文字符（含扩展区常用部分）每个计 1
+    var cnMatches = text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g);
+    if (cnMatches) count += cnMatches.length;
+    // 连续的英文字母/数字序列计 1
+    var enMatches = text.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g);
+    if (enMatches) count += enMatches.length;
+    return count;
+  }
+
+  function countChinese(text) {
+    if (!text) return 0;
+    var m = text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g);
+    return m ? m.length : 0;
+  }
+
+  function update() {
+    var text = elInput.value;
+
+    elChars.textContent = text.length;
+    elCharsNoSpace.textContent = text.replace(/\s/g, '').length;
+    elWords.textContent = countWords(text);
+    elCn.textContent = countChinese(text);
+
+    if (text === '') {
+      elLines.textContent = '0';
+      elParagraphs.textContent = '0';
+      return;
+    }
+    elLines.textContent = text.split('\n').length;
+    var paras = text.split('\n');
+    var paraCount = 0;
+    for (var i = 0; i < paras.length; i++) {
+      if (paras[i].trim() !== '') paraCount++;
+    }
+    elParagraphs.textContent = paraCount;
+  }
+
+  elInput.addEventListener('input', update);
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    window.copyText(elInput.value);
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    elInput.value = '';
+    update();
+    elInput.focus();
+  });
+
+  update();
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

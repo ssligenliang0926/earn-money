@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URL 编解码 - 在线URL编码解码工具 | 极简工具箱</title>
+<meta name="description" content="在线URL编解码工具：支持整段URL编码与单个参数编码（encodeURIComponent / encodeURI），URL解码还原中文参数。纯前端处理，数据不上传服务器。">
+<meta name="keywords" content="URL编码,URL解码,encodeURIComponent,encodeURI,URL转义,中文URL编码">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "URL 编解码工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "URL 编码与解码，支持整段 URL 或单个参数",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">URL 编解码</h1>
+  <p class="page-desc">URL 编码与解码，支持整段 URL 或单个参数，中文自动按 UTF-8 处理</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="urlInput">输入文本 / URL</label>
+        <textarea id="urlInput" rows="6" spellcheck="false" placeholder="编码：输入文本或完整 URL；解码：粘贴已编码的内容，如 https%3A%2F%2Fexample.com"></textarea>
+      </div>
+      <div class="field">
+        <label>编码模式</label>
+        <label class="radio-row"><input type="radio" name="encMode" value="component" checked> 单个参数（encodeURIComponent，编码全部特殊字符）</label>
+        <label class="radio-row"><input type="radio" name="encMode" value="uri"> 整段 URL（encodeURI，保留 : / ? & = 等结构字符）</label>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnEncode" type="button">URL 编码</button>
+        <button class="btn" id="btnDecode" type="button">URL 解码</button>
+        <button class="btn btn-secondary" id="btnSwap" type="button">输入输出互换</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+      <div class="field">
+        <label for="urlOutput">输出结果</label>
+        <textarea id="urlOutput" rows="6" readonly spellcheck="false" placeholder="结果将显示在这里"></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnCopy" type="button">复制结果</button>
+      </div>
+      <p class="msg" id="urlMsg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>「单个参数」模式会编码所有特殊字符（含 / : ? & =），适合拼接查询参数；「整段 URL」模式保留 URL 结构字符，只编码空格、中文等非法字符。</p>
+        <p>解码时两种格式（%XX 与 + 号空格）均可识别，连续多次编码的内容可重复点击「URL 解码」逐层还原。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>encodeURIComponent 和 encodeURI 有什么区别？</h3>
+    <p>encodeURI 用于编码完整 URL，不会转义 : / ? # & = 等保留字符；encodeURIComponent 用于编码 URL 中的某一段（如查询参数的值），会转义几乎所有特殊字符。参数值务必使用后者，否则 & 和 = 会破坏 URL 结构。</p>
+    <h3>为什么中文变成了 %E5%BC%80 这样的内容？</h3>
+    <p>URL 只允许 ASCII 字符，中文会先按 UTF-8 转成字节序列，每个字节再写成 %XX 形式。一个中文字符占 3 个字节，所以编码后是 3 组 %XX，属于正常结果。</p>
+    <h3>解码报错「URI 格式错误」怎么办？</h3>
+    <p>通常是 % 后面缺少两位十六进制数字，或 % 序列不是合法的 UTF-8 字节。请检查内容是否被截断，或确认它确实经过 URL 编码。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var input = document.getElementById('urlInput');
+  var output = document.getElementById('urlOutput');
+  var msg = document.getElementById('urlMsg');
+
+  function setMsg(text, ok) {
+    msg.textContent = text;
+    msg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function getMode() {
+    return document.querySelector('input[name="encMode"]:checked').value;
+  }
+
+  function encode() {
+    var text = input.value;
+    if (!text) { setMsg('请先输入要编码的内容', false); return; }
+    try {
+      output.value = getMode() === 'component'
+        ? encodeURIComponent(text)
+        : encodeURI(text);
+      setMsg('✓ 编码成功，输出长度 ' + output.value.length + ' 字符', true);
+    } catch (e) {
+      output.value = '';
+      setMsg('编码失败：' + e.message, false);
+    }
+  }
+
+  function decode() {
+    var text = input.value;
+    if (!text) { setMsg('请先输入要解码的内容', false); return; }
+    try {
+      /* 表单场景常见：+ 号代表空格 */
+      var normalized = text.replace(/\+/g, '%20');
+      output.value = decodeURIComponent(normalized);
+      setMsg('✓ 解码成功', true);
+    } catch (e) {
+      output.value = '';
+      setMsg('解码失败：URI 格式错误，请检查 % 序列是否完整', false);
+    }
+  }
+
+  document.getElementById('btnEncode').addEventListener('click', encode);
+  document.getElementById('btnDecode').addEventListener('click', decode);
+
+  document.getElementById('btnSwap').addEventListener('click', function () {
+    var tmp = input.value;
+    input.value = output.value;
+    output.value = tmp;
+    msg.textContent = '';
+    msg.className = 'msg';
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    input.value = '';
+    output.value = '';
+    msg.textContent = '';
+    msg.className = 'msg';
+    input.focus();
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    window.copyText(output.value);
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

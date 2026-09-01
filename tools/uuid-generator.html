@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UUID 生成器 - 在线批量生成 UUID v4 | 极简工具箱</title>
+<meta name="description" content="免费在线 UUID 生成器，使用浏览器加密级随机数批量生成 UUID v4，支持大写转换与去除连字符，一键复制单个或全部结果，全程本地计算，数据不离开浏览器。">
+<meta name="keywords" content="UUID生成器,UUID v4,在线UUID,批量生成UUID,GUID生成">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "UUID 生成器",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "批量生成 UUID v4，支持大写与去连字符",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">🆔 UUID 生成器</h1>
+  <p class="page-desc">批量生成 UUID v4，支持大写与去连字符</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="ugCount">生成数量（1 - 100）</label>
+        <input type="number" id="ugCount" min="1" max="100" value="5">
+      </div>
+
+      <div class="field">
+        <label>输出选项</label>
+        <label class="checkbox-row"><input type="checkbox" id="optUppercase"> 转换为大写</label>
+        <label class="checkbox-row"><input type="checkbox" id="optNoHyphen"> 去除连字符</label>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="btnGenerate" type="button">生成 UUID</button>
+        <button class="btn btn-secondary" id="btnCopyAll" type="button">复制全部</button>
+      </div>
+
+      <div class="field">
+        <label>生成结果（点击单条可复制）</label>
+        <div class="result-box" id="ugResult">点击「生成 UUID」开始</div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于 UUID 生成器</h2>
+        <p>UUID（通用唯一识别码）v4 是基于随机数生成的 128 位标识符，格式形如 8-4-4-4-12 的 32 个十六进制字符，广泛用于数据库主键、分布式系统追踪、文件命名等场景。</p>
+        <p>本工具优先使用浏览器原生的 crypto.randomUUID()，在不支持的环境中回退到 crypto.getRandomValues() 手动构造，保证随机性与唯一性。</p>
+        <p>所有计算均在你的浏览器本地完成，不会上传到任何服务器。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>UUID v4 会重复吗？</h3>
+    <p>理论上存在极小概率的碰撞，但 UUID v4 有 122 位随机空间（约 5.3 × 10³⁶ 种可能），实际使用中生成重复的可能性可以忽略不计，可放心用作唯一标识。</p>
+    <h3>UUID 和 GUID 是一回事吗？</h3>
+    <p>本质相同。UUID 是开放标准（RFC 4122）的叫法，GUID 是微软体系下的叫法，格式与生成方式一致，本工具生成的结果两者通用。</p>
+    <h3>为什么有的系统要求去掉连字符？</h3>
+    <p>部分接口、文件名或数据库字段不接受连字符，勾选「去除连字符」即可得到 32 位连续十六进制字符串；勾选「转换为大写」则适配要求大写格式的系统。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elCount = document.getElementById('ugCount');
+  var elUppercase = document.getElementById('optUppercase');
+  var elNoHyphen = document.getElementById('optNoHyphen');
+  var elResult = document.getElementById('ugResult');
+
+  var currentList = [];
+
+  function uuidV4() {
+    if (window.crypto && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    var bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
+    var hex = [];
+    for (var i = 0; i < 16; i++) {
+      var s = bytes[i].toString(16);
+      hex.push(s.length === 1 ? '0' + s : s);
+    }
+    return (
+      hex.slice(0, 4).join('') + '-' +
+      hex.slice(4, 6).join('') + '-' +
+      hex.slice(6, 8).join('') + '-' +
+      hex.slice(8, 10).join('') + '-' +
+      hex.slice(10, 16).join('')
+    );
+  }
+
+  function formatUuid(u) {
+    var out = u;
+    if (elNoHyphen.checked) out = out.replace(/-/g, '');
+    if (elUppercase.checked) out = out.toUpperCase();
+    return out;
+  }
+
+  function generate() {
+    var n = parseInt(elCount.value, 10);
+    if (isNaN(n) || n < 1) n = 1;
+    if (n > 100) n = 100;
+    elCount.value = n;
+
+    currentList = [];
+    for (var i = 0; i < n; i++) {
+      currentList.push(formatUuid(uuidV4()));
+    }
+    elResult.textContent = currentList.join('\n');
+  }
+
+  document.getElementById('btnGenerate').addEventListener('click', generate);
+
+  document.getElementById('btnCopyAll').addEventListener('click', function () {
+    window.copyText(currentList.join('\n'));
+  });
+
+  // 点击单条复制
+  elResult.addEventListener('click', function (e) {
+    if (currentList.length === 0) return;
+    var text = window.getSelection().toString();
+    if (text && currentList.indexOf(text.trim()) !== -1) {
+      window.copyText(text.trim());
+      return;
+    }
+    // 未选中时复制第一条
+    if (currentList.length === 1) {
+      window.copyText(currentList[0]);
+    }
+  });
+
+  // 选项变化时按当前选项重新格式化已有结果
+  elUppercase.addEventListener('change', function () {
+    if (currentList.length > 0) generate();
+  });
+  elNoHyphen.addEventListener('change', function () {
+    if (currentList.length > 0) generate();
+  });
+
+  generate();
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

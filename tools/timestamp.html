@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>时间戳转换 - Unix时间戳与日期时间在线互转 | 极简工具箱</title>
+<meta name="description" content="在线时间戳转换工具：Unix时间戳转北京时间、日期时间转时间戳，支持秒与毫秒，当前时间戳每秒实时更新。纯前端处理，数据不上传服务器。">
+<meta name="keywords" content="时间戳转换,Unix时间戳,时间戳转日期,日期转时间戳,当前时间戳,毫秒时间戳">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "时间戳转换工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "Unix 时间戳与日期时间互转，当前时间戳实时更新",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">时间戳转换</h1>
+  <p class="page-desc">Unix 时间戳与日期时间互转，支持秒 / 毫秒，当前时间戳实时更新</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section>
+      <div class="panel" style="margin-bottom:16px">
+        <label>当前时间戳（每秒自动刷新）</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="result-box" id="nowSec" style="flex:1;min-width:180px"></div>
+          <button class="btn btn-secondary" id="copyNowSec" type="button">复制秒</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <div class="result-box" id="nowMs" style="flex:1;min-width:180px"></div>
+          <button class="btn btn-secondary" id="copyNowMs" type="button">复制毫秒</button>
+        </div>
+        <p class="msg" style="color:var(--text-muted)">当前时间：<span id="nowDate"></span></p>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px">
+        <div class="field">
+          <label for="tsInput">时间戳转日期时间</label>
+          <input type="text" id="tsInput" inputmode="numeric" placeholder="输入秒或毫秒时间戳，自动识别，如 1767225600">
+        </div>
+        <div class="btn-group">
+          <button class="btn" id="btnTsConvert" type="button">转换</button>
+          <button class="btn btn-secondary" id="btnTsNow" type="button">填入当前时间戳</button>
+        </div>
+        <div class="field">
+          <label for="tsResult">转换结果</label>
+          <textarea id="tsResult" rows="3" readonly spellcheck="false"></textarea>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btnTsCopy" type="button">复制结果</button>
+        </div>
+        <p class="msg" id="tsMsg"></p>
+      </div>
+
+      <div class="panel">
+        <div class="field">
+          <label for="dtInput">日期时间转时间戳（本地时区）</label>
+          <input type="datetime-local" id="dtInput" step="1">
+        </div>
+        <div class="btn-group">
+          <button class="btn" id="btnDtConvert" type="button">转换</button>
+          <button class="btn btn-secondary" id="btnDtNow" type="button">填入当前时间</button>
+        </div>
+        <div class="field">
+          <label for="dtResult">转换结果</label>
+          <textarea id="dtResult" rows="3" readonly spellcheck="false"></textarea>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btnDtCopy" type="button">复制结果</button>
+        </div>
+        <p class="msg" id="dtMsg"></p>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>Unix 时间戳是从 1970-01-01 00:00:00 UTC 起经过的秒数（或毫秒数）。输入时间戳时工具会自动识别秒与毫秒：10 位左右按秒处理，13 位左右按毫秒处理。</p>
+        <p>日期时间转换基于浏览器所在本地时区计算，结果同时给出秒与毫秒两种时间戳。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>秒时间戳和毫秒时间戳怎么区分？</h3>
+    <p>秒级时间戳目前是 10 位数字（如 1767225600），毫秒级是 13 位数字（如 1767225600000）。本工具按位数自动识别，无需手动选择；Java、JavaScript 通常使用毫秒，PHP、Python 默认使用秒。</p>
+    <h3>为什么转换结果和我预期的时区不一样？</h3>
+    <p>本工具按浏览器本地时区显示日期时间。若你在北京时间（UTC+8）使用，1767225600 会显示为 2026-01-01 08:00:00，即 UTC 时间加 8 小时。</p>
+    <h3>当前时间戳多久更新一次？</h3>
+    <p>页面顶部的当前时间戳每秒自动刷新一次，点击「复制」即可取用，适合接口调试和缓存时间标记。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function fmtDate(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+      ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+
+  function weekName(d) {
+    return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()];
+  }
+
+  /* ---------------- 当前时间戳实时更新 ---------------- */
+  var nowSec = document.getElementById('nowSec');
+  var nowMs = document.getElementById('nowMs');
+  var nowDate = document.getElementById('nowDate');
+
+  function tick() {
+    var d = new Date();
+    nowSec.textContent = '秒：' + Math.floor(d.getTime() / 1000);
+    nowMs.textContent = '毫秒：' + d.getTime();
+    nowDate.textContent = fmtDate(d) + ' ' + weekName(d);
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  document.getElementById('copyNowSec').addEventListener('click', function () {
+    window.copyText(String(Math.floor(Date.now() / 1000)));
+  });
+  document.getElementById('copyNowMs').addEventListener('click', function () {
+    window.copyText(String(Date.now()));
+  });
+
+  /* ---------------- 时间戳 → 日期时间 ---------------- */
+  var tsInput = document.getElementById('tsInput');
+  var tsResult = document.getElementById('tsResult');
+  var tsMsg = document.getElementById('tsMsg');
+
+  function setMsg(el, text, ok) {
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function convertTs() {
+    var raw = tsInput.value.trim();
+    if (!raw) { setMsg(tsMsg, '请输入时间戳', false); return; }
+    if (!/^\d+$/.test(raw)) { setMsg(tsMsg, '时间戳必须是纯数字', false); return; }
+    var num = Number(raw);
+    var isMs = raw.length >= 12;
+    var ms = isMs ? num : num * 1000;
+    if (!isFinite(ms) || ms < 0 || ms > 8.64e15) {
+      setMsg(tsMsg, '时间戳超出可表示范围', false);
+      return;
+    }
+    var d = new Date(ms);
+    tsResult.value = fmtDate(d) + ' ' + weekName(d) +
+      '\nUTC：' + d.toUTCString() +
+      '\nISO 8601：' + d.toISOString();
+    setMsg(tsMsg, '✓ 已按' + (isMs ? '毫秒' : '秒') + '时间戳转换', true);
+  }
+
+  document.getElementById('btnTsConvert').addEventListener('click', convertTs);
+  tsInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') convertTs(); });
+
+  document.getElementById('btnTsNow').addEventListener('click', function () {
+    tsInput.value = Math.floor(Date.now() / 1000);
+    convertTs();
+  });
+  document.getElementById('btnTsCopy').addEventListener('click', function () {
+    window.copyText(tsResult.value);
+  });
+
+  /* ---------------- 日期时间 → 时间戳 ---------------- */
+  var dtInput = document.getElementById('dtInput');
+  var dtResult = document.getElementById('dtResult');
+  var dtMsg = document.getElementById('dtMsg');
+
+  function localInputValue(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+      'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+
+  function convertDt() {
+    var v = dtInput.value;
+    if (!v) { setMsg(dtMsg, '请选择日期时间', false); return; }
+    var d = new Date(v);
+    if (isNaN(d.getTime())) { setMsg(dtMsg, '日期时间无效，请重新选择', false); return; }
+    var ms = d.getTime();
+    dtResult.value = '秒：' + Math.floor(ms / 1000) + '\n毫秒：' + ms;
+    setMsg(dtMsg, '✓ 转换成功（按本地时区 ' + fmtDate(d) + '）', true);
+  }
+
+  document.getElementById('btnDtConvert').addEventListener('click', convertDt);
+  document.getElementById('btnDtNow').addEventListener('click', function () {
+    dtInput.value = localInputValue(new Date());
+    convertDt();
+  });
+  document.getElementById('btnDtCopy').addEventListener('click', function () {
+    window.copyText(dtResult.value);
+  });
+
+  /* 初始填入当前时间，方便直接使用 */
+  dtInput.value = localInputValue(new Date());
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

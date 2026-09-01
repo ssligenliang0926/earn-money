@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON 格式化 - 在线JSON校验、格式化与压缩工具 | 极简工具箱</title>
+<meta name="description" content="在线JSON格式化工具：JSON校验、格式化美化、压缩成一行，解析错误精准定位到行和列。纯前端处理，数据不上传服务器，打开即用。">
+<meta name="keywords" content="JSON格式化,JSON校验,JSON压缩,JSON在线解析,JSON美化,JSON错误定位">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "JSON 格式化工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "JSON 校验、格式化与压缩，错误精准定位到行列",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">JSON 格式化</h1>
+  <p class="page-desc">粘贴 JSON 文本，一键校验、格式化与压缩，解析错误精准定位到行列</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="jsonInput">输入 JSON</label>
+        <textarea id="jsonInput" rows="12" spellcheck="false" placeholder='在此粘贴 JSON，例如：{"name": "极简工具箱", "free": true}'></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnFormat" type="button">格式化</button>
+        <button class="btn btn-secondary" id="btnCompress" type="button">压缩</button>
+        <select id="indentSize" style="width:auto" aria-label="缩进设置">
+          <option value="2">缩进 2 空格</option>
+          <option value="4">缩进 4 空格</option>
+          <option value="tab">缩进 Tab</option>
+        </select>
+        <button class="btn btn-secondary" id="btnSample" type="button">填入示例</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+      <div class="field">
+        <label for="jsonOutput">输出结果</label>
+        <textarea id="jsonOutput" rows="12" readonly spellcheck="false" placeholder="格式化 / 压缩结果将显示在这里"></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="btnCopy" type="button">复制结果</button>
+      </div>
+      <p class="msg" id="jsonMsg" style="white-space:pre-wrap"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>使用说明</h2>
+        <p>将 JSON 文本粘贴到输入框，点击「格式化」即可校验语法并美化输出；点击「压缩」会去除所有空白字符，得到单行 JSON，方便通过接口传输。</p>
+        <p>若 JSON 存在语法错误，页面会给出错误原因，并定位到具体的行和列，帮助你快速修复。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>JSON 校验失败的常见原因有哪些？</h3>
+    <p>最常见的是：键名没有加双引号、使用了单引号、对象或数组末尾多逗号、混入了中文引号或中文逗号、添加了注释等。标准 JSON 不支持注释和尾逗号，本工具会把错误定位到具体行列，方便快速排查。</p>
+    <h3>格式化和压缩有什么区别？</h3>
+    <p>格式化会按选定的缩进对 JSON 进行换行和缩进排版，便于阅读和排查问题；压缩则会移除所有换行、缩进和多余空白，输出单行 JSON，体积更小，适合网络传输。</p>
+    <h3>我的数据会被上传吗？</h3>
+    <p>不会。所有解析均在你的浏览器本地完成，页面不会发起任何网络请求，可以放心处理包含敏感信息的 JSON。</p>
+  </section>
+</main>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var input = document.getElementById('jsonInput');
+  var output = document.getElementById('jsonOutput');
+  var msg = document.getElementById('jsonMsg');
+  var indentSel = document.getElementById('indentSize');
+
+  function setMsg(text, ok) {
+    msg.textContent = text;
+    msg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function getIndent() {
+    var v = indentSel.value;
+    return v === 'tab' ? '\t' : parseInt(v, 10);
+  }
+
+  /* 从解析错误中提取行列位置（兼容 Chrome / Firefox 的错误信息格式） */
+  function locateError(err, text) {
+    var textMsg = err.message;
+    var line = null, col = null;
+    var m = /at position (\d+)/.exec(textMsg);
+    if (m) {
+      var pos = Math.min(parseInt(m[1], 10), text.length);
+      var before = text.slice(0, pos);
+      line = before.split('\n').length;
+      col = pos - before.lastIndexOf('\n');
+    } else {
+      var m2 = /line (\d+) column (\d+)/.exec(textMsg);
+      if (m2) {
+        line = parseInt(m2[1], 10);
+        col = parseInt(m2[2], 10);
+      }
+    }
+    if (!line) return '解析失败：' + textMsg;
+    var lineText = text.split('\n')[line - 1] || '';
+    return '解析失败：' + textMsg +
+      '\n错误位置：第 ' + line + ' 行，第 ' + col + ' 列\n' +
+      lineText + '\n' + new Array(Math.max(col, 1)).join(' ') + '↑';
+  }
+
+  function run(mode) {
+    var text = input.value.trim();
+    if (!text) {
+      output.value = '';
+      setMsg('请先输入 JSON 内容', false);
+      return;
+    }
+    try {
+      var data = JSON.parse(text);
+      output.value = mode === 'compress'
+        ? JSON.stringify(data)
+        : JSON.stringify(data, null, getIndent());
+      setMsg('✓ JSON 格式正确，' + (mode === 'compress' ? '已压缩为单行' : '已格式化'), true);
+    } catch (e) {
+      output.value = '';
+      setMsg(locateError(e, text), false);
+    }
+  }
+
+  document.getElementById('btnFormat').addEventListener('click', function () { run('format'); });
+  document.getElementById('btnCompress').addEventListener('click', function () { run('compress'); });
+
+  document.getElementById('btnSample').addEventListener('click', function () {
+    input.value = '{"site":"极简工具箱","online":true,"tools":["JSON 格式化","时间戳转换","Base64 编解码","URL 编解码"],"score":4.9,"contact":{"email":"demo@example.com","address":null}}';
+    run('format');
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    input.value = '';
+    output.value = '';
+    msg.textContent = '';
+    msg.className = 'msg';
+    input.focus();
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    window.copyText(output.value);
+  });
+
+  /* 相关工具（来自 common.js 的 TOOL_LIST） */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>
