@@ -3,19 +3,34 @@
 .vscode/
 *.iml
 
-# Browser cache
+# Browser cache / build tools
 .npm-cache/
 npm-debug.log*
+node_modules/
 
 # Playwright browser
 pw_browsers/
 
-# Node modules
-node_modules/
-
 # Vercel
 .vercel/
+.vercel-data/
+.vercel-cache/
+
+# GitHub CLI
+gh-cli/
+.gh-config/
+
+# GitHub zip
+gh.zip
+
+# Package files (not needed for static site)
+package.json
+package-lock.json
 
 # Test outputs
 test_screenshots/
 test_report.html
+baidu_verify_codeva-S120U6eAaO.html
+
+# Google verification (keep if deploying)
+# google*.html
