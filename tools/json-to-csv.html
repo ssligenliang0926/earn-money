@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON 转 CSV - 在线 JSON 数据转换工具 | 极简工具箱</title>
+<meta name="description" content="免费在线 JSON 转 CSV 工具，支持嵌套 JSON 展开、自定义分隔符、UTF-8 BOM 编码。无需注册，数据不离开浏览器，打开即用。">
+<meta name="keywords" content="JSON转CSV,JSON转Excel,JSON导出CSV,CSV转换,数据转换,在线工具">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "JSON 转 CSV",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "将 JSON 数组数据转换为 CSV 格式，支持嵌套对象展开和自定义配置",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<style>
+.json-tree {
+  font-size: 13px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+}
+.json-tree ul {
+  list-style: none;
+  padding-left: 20px;
+  margin: 0;
+}
+.json-tree li {
+  padding: 2px 0;
+}
+.json-tree .key { color: var(--primary); font-weight: 500; }
+.json-tree .string { color: #16a34a; }
+.json-tree .number { color: #dc2626; }
+.json-tree .boolean { color: #f59e0b; }
+.json-tree .null { color: #6b7280; }
+.csv-preview {
+  font-family: Consolas, Monaco, monospace;
+  font-size: 12px;
+  max-height: 200px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  white-space: pre;
+  word-break: break-all;
+}
+.column-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.column-select label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.column-select label:hover { border-color: var(--primary); }
+</style>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">📊 JSON 转 CSV</h1>
+  <p class="page-desc">将 JSON 数组数据一键转换为 CSV 格式，支持嵌套对象展开，数据本地处理不上传</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="jsonInput">输入 JSON 数据</label>
+        <textarea id="jsonInput" rows="8" placeholder='[{"name":"张三","age":25,"city":"北京"},{"name":"李四","age":30,"city":"上海"}]'></textarea>
+      </div>
+
+      <div class="field">
+        <label>CSV 选项</label>
+        <div class="checkbox-row">
+          <input type="checkbox" id="includeBom" checked>
+          <label for="includeBom">添加 UTF-8 BOM（Excel 兼容）</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="flattenNested" checked>
+          <label for="flattenNested">展开嵌套对象（如 user.name）</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="includeArray" checked>
+          <label for="includeArray">展开数组为 JSON 字符串</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="delimiter">分隔符</label>
+        <select id="delimiter">
+          <option value=",">逗号 (,)</option>
+          <option value=";">分号 (;)</option>
+          <option value="\t">制表符 (Tab)</option>
+          <option value="|">竖线 (|)</option>
+        </select>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="btnConvert" type="button">转换为 CSV</button>
+        <button class="btn btn-secondary" id="btnDownload" type="button">下载 CSV</button>
+        <button class="btn btn-secondary" id="btnCopy" type="button">复制 CSV</button>
+        <button class="btn btn-secondary" id="btnSample" type="button">填入示例</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+
+      <div id="resultSection" style="display:none">
+        <div class="field">
+          <label>CSV 预览</label>
+          <div id="csvPreview" class="csv-preview"></div>
+        </div>
+        <div class="stats">
+          <div class="stat-card">
+            <div class="num" id="rowCount">-</div>
+            <div class="label">行数</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="colCount">-</div>
+            <div class="label">列数</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="sizeInfo">-</div>
+            <div class="label">大小</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="msg" id="msg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于 JSON 转 CSV</h2>
+        <p>JSON（JavaScript Object Notation）和 CSV（Comma Separated Values）是两种常用的数据格式。JSON 适合存储和传输结构化数据，而 CSV 适合表格数据处理和分析。</p>
+        <p>本工具可以将 JSON 数组转换为 CSV 格式，支持以下功能：</p>
+        <ul style="margin-left:20px;margin-top:8px;color:var(--text-muted)">
+          <li>自动提取所有列名</li>
+          <li>支持嵌套对象展开</li>
+          <li>支持 UTF-8 BOM（Excel 兼容）</li>
+          <li>自定义分隔符</li>
+          <li>数据在浏览器本地处理，不上传服务器</li>
+        </ul>
+        <p style="margin-top:12px">转换后的 CSV 文件可以直接导入 Excel、Google Sheets 或其他数据分析工具。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>JSON 格式要求是什么？</h3>
+    <p>输入的 JSON 必须是数组格式，每个元素是一个对象。例如：[{"name":"张三","age":25},{"name":"李四","age":30}]。如果是单个对象，工具会自动包装为数组。</p>
+    <h3>如何处理嵌套的 JSON？</h3>
+    <p>默认情况下，嵌套对象会被展开为多列，列名使用点号分隔，如 user.name、user.age。也可以关闭此选项，将嵌套对象转换为 JSON 字符串。</p>
+    <h3>为什么 Excel 打开 CSV 中文乱码？</h3>
+    <p>勾选"添加 UTF-8 BOM"选项可以在 CSV 文件开头添加字节顺序标记，让 Excel 正确识别 UTF-8 编码。</p>
+  </section>
+</main>
+<script src="../js/analytics.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elInput = document.getElementById('jsonInput');
+  var elDelimiter = document.getElementById('delimiter');
+  var elIncludeBom = document.getElementById('includeBom');
+  var elFlattenNested = document.getElementById('flattenNested');
+  var elIncludeArray = document.getElementById('includeArray');
+  var elCsvPreview = document.getElementById('csvPreview');
+  var elResultSection = document.getElementById('resultSection');
+  var elMsg = document.getElementById('msg');
+
+  var currentCsv = '';
+  var currentHeaders = [];
+
+  var SAMPLE_DATA = [
+    { id: 1, name: '张三', age: 25, city: '北京', score: 95.5 },
+    { id: 2, name: '李四', age: 30, city: '上海', score: 88.0 },
+    { id: 3, name: '王五', age: 28, city: '广州', score: 92.3 },
+    { id: 4, name: '赵六', age: 35, city: '深圳', score: 78.5 }
+  ];
+
+  function setMsg(text, ok) {
+    elMsg.textContent = text;
+    elMsg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function flattenObject(obj, prefix, result) {
+    result = result || {};
+    prefix = prefix || '';
+    
+    for (var key in obj) {
+      if (!obj.hasOwnProperty(key)) continue;
+      
+      var newKey = prefix ? prefix + '.' + key : key;
+      var value = obj[key];
+      
+      if (value && typeof value === 'object' && !Array.isArray(value) && elFlattenNested.checked) {
+        flattenObject(value, newKey, result);
+      } else {
+        if (Array.isArray(value) && elIncludeArray.checked) {
+          result[newKey] = JSON.stringify(value);
+        } else {
+          result[newKey] = value;
+        }
+      }
+    }
+    
+    return result;
+  }
+
+  function escapeCsvValue(value) {
+    if (value === null || value === undefined) return '';
+    var str = String(value);
+    if (str.indexOf(',') !== -1 || str.indexOf('"') !== -1 || str.indexOf('\n') !== -1) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  function convert() {
+    var jsonStr = elInput.value.trim();
+    if (!jsonStr) {
+      setMsg('请输入 JSON 数据', false);
+      elResultSection.style.display = 'none';
+      return;
+    }
+
+    try {
+      var data = JSON.parse(jsonStr);
+      if (!Array.isArray(data)) {
+        data = [data];
+      }
+
+      // 展开嵌套对象
+      var flattened = data.map(function(item) {
+        return flattenObject(item);
+      });
+
+      // 收集所有列名
+      var allKeys = [];
+      flattened.forEach(function(row) {
+        Object.keys(row).forEach(function(key) {
+          if (allKeys.indexOf(key) === -1) allKeys.push(key);
+        });
+      });
+
+      currentHeaders = allKeys;
+      var delimiter = elDelimiter.value === '\\t' ? '\t' : elDelimiter.value;
+      
+      // 生成 CSV
+      var lines = [];
+      lines.push(allKeys.map(escapeCsvValue).join(delimiter));
+      
+      flattened.forEach(function(row) {
+        var values = allKeys.map(function(key) {
+          return escapeCsvValue(row[key]);
+        });
+        lines.push(values.join(delimiter));
+      });
+
+      // 添加 BOM
+      var csvContent = lines.join('\n');
+      if (elIncludeBom.checked) {
+        csvContent = '\uFEFF' + csvContent;
+      }
+
+      currentCsv = csvContent;
+
+      // 显示预览
+      elCsvPreview.textContent = csvContent.replace(/\uFEFF/g, '').substring(0, 500) + 
+        (csvContent.length > 500 ? '...' : '');
+      
+      elResultSection.style.display = '';
+      
+      // 更新统计
+      document.getElementById('rowCount').textContent = flattened.length;
+      document.getElementById('colCount').textContent = allKeys.length;
+      document.getElementById('sizeInfo').textContent = formatBytes(new Blob([csvContent]).size);
+      
+      setMsg('✓ 转换成功，共 ' + flattened.length + ' 行 ' + allKeys.length + ' 列', true);
+      
+    } catch (e) {
+      elResultSection.style.display = 'none';
+      setMsg('✗ JSON 解析失败: ' + e.message, false);
+    }
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function downloadCsv() {
+    if (!currentCsv) {
+      setMsg('请先转换数据', false);
+      return;
+    }
+    var blob = new Blob([currentCsv], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'data.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setMsg('✓ 下载成功', true);
+  }
+
+  function copyCsv() {
+    if (!currentCsv) {
+      setMsg('请先转换数据', false);
+      return;
+    }
+    window.copyText(currentCsv.replace(/\uFEFF/g, ''));
+  }
+
+  document.getElementById('btnConvert').addEventListener('click', convert);
+  document.getElementById('btnDownload').addEventListener('click', downloadCsv);
+  document.getElementById('btnCopy').addEventListener('click', copyCsv);
+  
+  document.getElementById('btnSample').addEventListener('click', function () {
+    elInput.value = JSON.stringify(SAMPLE_DATA, null, 2);
+    convert();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    elInput.value = '';
+    elResultSection.style.display = 'none';
+    currentCsv = '';
+    setMsg('', true);
+    elInput.focus();
+  });
+
+  elInput.addEventListener('keydown', function (e) { 
+    if (e.key === 'Enter' && e.ctrlKey) convert(); 
+  });
+
+  /* 相关工具 */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

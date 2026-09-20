@@ -1,0 +1,445 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown 预览 - 在线Markdown实时编辑预览工具 | 极简工具箱</title>
+<meta name="description" content="在线Markdown预览工具：左侧编辑、右侧实时渲染，支持全屏预览与分屏编辑，GFM表格/代码块/公式全覆盖。纯前端处理，数据不上传服务器，打开即用。">
+<meta name="keywords" content="Markdown预览,Markdown编辑器,Markdown实时预览,Markdown在线编辑,Markdown全屏,Markdown分屏">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+/* ---- 分栏布局 ---- */
+.md-editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  height: 560px;
+}
+.md-editor-layout .md-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.md-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.md-pane-body {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+#mdEdit {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  resize: none;
+  min-height: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 14px;
+}
+#mdEdit:focus { box-shadow: none; }
+
+/* ---- 预览区 ---- */
+.md-prev-body {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: var(--surface);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.md-prev-body h1, .md-prev-body h2, .md-prev-body h3,
+.md-prev-body h4, .md-prev-body h5, .md-prev-body h6 { margin: 18px 0 10px; line-height: 1.4; }
+.md-prev-body h1 { font-size: 26px; border-bottom: 2px solid var(--border); padding-bottom: 6px; }
+.md-prev-body h2 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.md-prev-body h3 { font-size: 18px; }
+.md-prev-body h4, .md-prev-body h5, .md-prev-body h6 { font-size: 16px; }
+.md-prev-body p { margin: 10px 0; }
+.md-prev-body ul, .md-prev-body ol { margin: 10px 0; padding-left: 26px; }
+.md-prev-body li { margin: 3px 0; }
+.md-prev-body code {
+  background: var(--primary-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  font-size: 13px;
+}
+.md-prev-body pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+.md-prev-body pre code { background: none; padding: 0; font-size: 13px; }
+.md-prev-body blockquote {
+  border-left: 4px solid var(--primary);
+  background: var(--primary-light);
+  padding: 8px 16px;
+  margin: 12px 0;
+  border-radius: 0 8px 8px 0;
+  color: var(--text-muted);
+}
+.md-prev-body table { border-collapse: collapse; margin: 12px 0; width: 100%; }
+.md-prev-body th, .md-prev-body td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+.md-prev-body th { background: var(--primary-light); font-weight: 600; }
+.md-prev-body img { max-width: 100%; border-radius: 8px; }
+.md-prev-body hr { border: none; border-top: 2px solid var(--border); margin: 20px 0; }
+.md-prev-body a { color: var(--primary); }
+.md-prev-body .empty-hint { color: var(--text-muted); font-size: 14px; text-align: center; padding: 40px 0; }
+
+/* ---- 全屏模式 ---- */
+.md-fullscreen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+.md-fullscreen .md-fs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.md-fullscreen .md-fs-toolbar .title { font-size: 14px; color: var(--text-muted); flex: 1; }
+.md-fullscreen .md-fs-content {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+}
+.md-fullscreen .md-fs-content.split { grid-template-columns: 1fr 1fr; }
+.md-fullscreen .md-fs-content.preview-only { grid-template-columns: 1fr; }
+.md-fullscreen .md-fs-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface);
+}
+.md-fullscreen .md-fs-pane textarea {
+  width: 100%; height: 100%; border: none; border-radius: 0;
+  resize: none; min-height: 0; padding: 20px;
+  font-size: 15px; line-height: 1.7;
+}
+.md-fullscreen .md-fs-pane textarea:focus { box-shadow: none; }
+.md-fullscreen .md-fs-preview {
+  height: 100%; overflow-y: auto; padding: 24px 32px;
+  font-size: 16px; line-height: 1.8;
+}
+.md-fs-label {
+  padding: 6px 12px; background: var(--bg); border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--text-muted); flex-shrink: 0;
+}
+
+/* ---- 移动端 ---- */
+@media (max-width: 768px) {
+  .md-editor-layout { grid-template-columns: 1fr; height: auto; }
+  .md-editor-layout .md-pane { height: 320px; }
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Markdown 预览工具",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "Markdown 实时编辑预览，支持全屏与分屏模式",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6360666557237693"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">Markdown 预览</h1>
+  <p class="page-desc">左侧编辑 Markdown，右侧实时渲染预览，支持全屏分屏编辑与全屏预览</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="btn-group">
+    <button class="btn" id="btnFullscreenSplit" type="button">⛶ 全屏分屏</button>
+    <button class="btn btn-secondary" id="btnFullscreenPreview" type="button">⛶ 全屏预览</button>
+    <button class="btn btn-secondary" id="btnSample" type="button">填入示例</button>
+    <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+    <button class="btn btn-secondary" id="btnCopyHtml" type="button">复制 HTML</button>
+    <label class="checkbox-row"><input type="checkbox" id="mdBreaks"> 单换行转 &lt;br&gt;</label>
+  </div>
+
+  <div class="md-editor-layout" id="editorLayout">
+    <div class="md-pane">
+      <div class="md-pane-header"><span>✏️ 编辑区</span><span id="charCount">0 字符</span></div>
+      <div class="md-pane-body">
+        <textarea id="mdEdit" spellcheck="false" placeholder="在此输入或粘贴 Markdown 文本…&#10;&#10;支持标题、列表、代码块、表格、引用、链接、图片等 GFM 语法"></textarea>
+      </div>
+    </div>
+    <div class="md-pane">
+      <div class="md-pane-header"><span>👁️ 预览区</span><span id="renderTime"></span></div>
+      <div class="md-pane-body">
+        <div class="md-prev-body" id="mdPreview">
+          <div class="empty-hint">预览将显示在这里</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel seo-text">
+      <h2>使用说明</h2>
+      <p>在左侧编辑区输入或粘贴 Markdown 文本，右侧会实时渲染预览效果，无需点击任何按钮。</p>
+      <p>点击「全屏分屏」进入全屏编辑模式，左侧编辑、右侧预览，最大化利用屏幕空间；点击「全屏预览」则只显示渲染结果，适合演示和阅读。</p>
+      <p>支持 GFM 语法：标题、加粗、斜体、删除线、列表、代码块、表格、引用、链接、图片、分割线等。全屏模式下按 <kbd>Esc</kbd> 或点击右上角按钮退出。</p>
+    </section>
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>全屏模式下怎么退出？</h3>
+    <p>按键盘 <kbd>Esc</kbd> 键，或点击全屏模式右上角的「退出全屏」按钮即可退出。</p>
+    <h3>支持哪些 Markdown 语法？</h3>
+    <p>支持 GFM（GitHub Flavored Markdown）全部常用语法：多级标题、有序/无序列表、任务列表、加粗、斜体、删除线、行内代码、代码块、链接、图片、引用、表格、分割线等。</p>
+    <h3>内容会被上传到服务器吗？</h3>
+    <p>不会。所有渲染都在你的浏览器本地完成，页面不会上传任何内容，可放心处理未公开的文稿。</p>
+    <h3>和「Markdown 转 HTML」工具有什么区别？</h3>
+    <p>本工具侧重于实时编辑与预览，支持分屏和全屏模式，适合撰写文档时即时查看效果；「Markdown 转 HTML」侧重于将 Markdown 转换为 HTML 代码并复制使用。</p>
+  </section>
+</main>
+<script src="../js/analytics.js"></script>`n<script src="../js/common.js"></script>
+<script src="../js/vendor/marked.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var editor = document.getElementById('mdEdit');
+  var preview = document.getElementById('mdPreview');
+  var charCount = document.getElementById('charCount');
+  var renderTime = document.getElementById('renderTime');
+  var breaksBox = document.getElementById('mdBreaks');
+  var isFullscreen = false;
+  var fsMode = 'split';
+  var fsOverlay = null;
+
+  function render() {
+    var md = editor.value;
+    charCount.textContent = md.length + ' 字符';
+    if (!md.trim()) {
+      preview.innerHTML = '<div class="empty-hint">预览将显示在这里</div>';
+      renderTime.textContent = '';
+      return;
+    }
+    var t0 = performance.now();
+    try {
+      var html = window.marked.parse(md);
+      preview.innerHTML = html;
+      var t1 = performance.now();
+      renderTime.textContent = (t1 - t0).toFixed(1) + 'ms';
+      if (fsOverlay) {
+        var fsPreview = fsOverlay.querySelector('.md-fs-preview');
+        if (fsPreview) fsPreview.innerHTML = html;
+      }
+    } catch (e) {
+      preview.innerHTML = '<div class="empty-hint" style="color:var(--danger)">渲染错误：' + e.message + '</div>';
+    }
+  }
+
+  editor.addEventListener('input', render);
+
+  breaksBox.addEventListener('change', function () {
+    window.marked.use({ breaks: breaksBox.checked });
+    render();
+  });
+
+  /* ---- 全屏模式 ---- */
+  function enterFullscreen(mode) {
+    if (isFullscreen) exitFullscreen();
+    fsMode = mode;
+    isFullscreen = true;
+
+    fsOverlay = document.createElement('div');
+    fsOverlay.className = 'md-fullscreen';
+
+    var toolbar =
+      '<div class="md-fs-toolbar">' +
+        '<span class="title">Markdown ' + (mode === 'split' ? '全屏分屏' : '全屏预览') + '</span>' +
+        '<button class="btn btn-secondary" id="btnFsSwitch" type="button">' + (mode === 'split' ? '切到纯预览' : '切到分屏') + '</button>' +
+        '<button class="btn" id="btnFsExit" type="button">退出全屏 (Esc)</button>' +
+      '</div>';
+
+    var content;
+    if (mode === 'split') {
+      content =
+        '<div class="md-fs-content split">' +
+          '<div class="md-fs-pane">' +
+            '<div class="md-fs-label">✏️ 编辑区</div>' +
+            '<textarea id="fsEdit" spellcheck="false"></textarea>' +
+          '</div>' +
+          '<div class="md-fs-pane">' +
+            '<div class="md-fs-label">👁️ 预览区</div>' +
+            '<div class="md-fs-preview" id="fsPreview"></div>' +
+          '</div>' +
+        '</div>';
+    } else {
+      content =
+        '<div class="md-fs-content preview-only">' +
+          '<div class="md-fs-pane">' +
+            '<div class="md-fs-preview" id="fsPreview"></div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    fsOverlay.innerHTML = toolbar + content;
+    document.body.appendChild(fsOverlay);
+    document.body.style.overflow = 'hidden';
+
+    var fsEdit = document.getElementById('fsEdit');
+    var fsPreview = document.getElementById('fsPreview');
+
+    if (fsEdit) {
+      fsEdit.value = editor.value;
+      fsEdit.addEventListener('input', function () {
+        editor.value = fsEdit.value;
+        render();
+      });
+      fsEdit.focus();
+    }
+
+    var md = editor.value;
+    if (md.trim()) {
+      fsPreview.innerHTML = window.marked.parse(md);
+    } else {
+      fsPreview.innerHTML = '<div class="empty-hint" style="text-align:center;padding:60px 0;color:var(--text-muted)">预览将显示在这里</div>';
+    }
+
+    document.getElementById('btnFsExit').addEventListener('click', exitFullscreen);
+    document.getElementById('btnFsSwitch').addEventListener('click', function () {
+      var newMode = fsMode === 'split' ? 'preview' : 'split';
+      exitFullscreen();
+      enterFullscreen(newMode);
+    });
+  }
+
+  function exitFullscreen() {
+    if (!isFullscreen) return;
+    isFullscreen = false;
+    if (fsOverlay) { fsOverlay.remove(); fsOverlay = null; }
+    document.body.style.overflow = '';
+    render();
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isFullscreen) { e.preventDefault(); exitFullscreen(); }
+  });
+
+  document.getElementById('btnFullscreenSplit').addEventListener('click', function () { enterFullscreen('split'); });
+  document.getElementById('btnFullscreenPreview').addEventListener('click', function () { enterFullscreen('preview'); });
+
+  /* ---- 示例 ---- */
+  document.getElementById('btnSample').addEventListener('click', function () {
+    editor.value = [
+      '# Markdown 预览工具',
+      '',
+      '> 左侧编辑，右侧实时预览，支持**全屏分屏**和**全屏预览**两种模式。',
+      '',
+      '## 功能特点',
+      '',
+      '- 实时渲染，输入即见效果',
+      '- 全屏分屏模式，最大化编辑空间',
+      '- 全屏预览模式，适合演示和阅读',
+      '- 支持 GFM 表格、代码块、任务列表',
+      '- 纯前端处理，数据不上传',
+      '',
+      '## 代码示例',
+      '',
+      '```javascript',
+      'function greet(name) {',
+      '  return `Hello, ${name}!`;',
+      '}',
+      '',
+      'console.log(greet("极简工具箱"));',
+      '```',
+      '',
+      '## 表格',
+      '',
+      '| 模式 | 说明 | 快捷键 |',
+      '| --- | --- | --- |',
+      '| 普通模式 | 左右分栏 | - |',
+      '| 全屏分屏 | 全屏左右分栏 | Esc 退出 |',
+      '| 全屏预览 | 仅显示渲染结果 | Esc 退出 |',
+      '',
+      '## 任务列表',
+      '',
+      '- [x] 实时预览',
+      '- [x] 全屏模式',
+      '- [ ] 导出 PDF',
+      '',
+      '## 行内样式',
+      '',
+      '支持 **加粗**、*斜体*、~~删除线~~、`行内代码`、[链接](https://quicktool.xin) 等语法。',
+      '',
+      '---',
+      '',
+      '开始你的 Markdown 创作吧！'
+    ].join('\n');
+    render();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    editor.value = '';
+    render();
+    editor.focus();
+  });
+
+  document.getElementById('btnCopyHtml').addEventListener('click', function () {
+    var md = editor.value;
+    if (!md.trim()) { window.toast('没有内容可复制'); return; }
+    var html = window.marked.parse(md);
+    window.copyText(html);
+  });
+
+  /* ---- 相关工具 ---- */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
+

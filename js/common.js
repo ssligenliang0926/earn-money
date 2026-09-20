@@ -30,6 +30,7 @@
     { file: 'color-converter.html',    name: '颜色转换',      icon: '🎨', desc: 'HEX、RGB、HSL 颜色互转，实时预览取色' },
     { file: 'uuid-generator.html',     name: 'UUID 生成器',   icon: '🆔', desc: '批量生成 UUID v4，支持大写与去连字符' },
     { file: 'markdown-to-html.html',   name: 'Markdown 转 HTML', icon: '📄', desc: 'Markdown 实时转换为 HTML，支持渲染预览' },
+    { file: 'markdown-preview.html',   name: 'Markdown 预览',    icon: '📝', desc: 'Markdown 实时编辑预览，支持全屏分屏与全屏预览' },
     { file: 'regex-tester.html',       name: '正则测试',      icon: '🔍', desc: '正则表达式实时匹配、高亮与替换' },
     { file: 'rmb-uppercase.html',      name: '金额转大写',    icon: '💰', desc: '人民币金额一键转财务规范中文大写' },
     { file: 'qrcode-generator.html',   name: '二维码生成器',  icon: '🔳', desc: '实时生成二维码，支持中文，下载 PNG' },
@@ -43,7 +44,11 @@
     { file: 'radix-converter.html',    name: '进制转换',      icon: '🔢', desc: '二进制/八进制/十进制/十六进制实时互转' },
     { file: 'html-escape.html',        name: 'HTML 转义',     icon: '🛡️', desc: '文本与 HTML 实体互转，防 XSS 必备' },
     { file: 'date-difference.html',    name: '日期天数计算',  icon: '📅', desc: '计算两个日期相差天数，附周数月数估算' },
-    { file: 'mortgage-calculator.html', name: '房贷计算器',   icon: '🏠', desc: '等额本息/等额本金月供与总利息对比计算' }
+    { file: 'mortgage-calculator.html', name: '房贷计算器',   icon: '🏠', desc: '等额本息/等额本金月供与总利息对比计算' },
+    { file: 'api-tester.html',          name: 'API 响应测试', icon: '🔌', desc: '在线测试 HTTP 接口，支持 GET/POST/PUT/DELETE' },
+    { file: 'jwt-decoder.html',         name: 'JWT 解码器',   icon: '🔐', desc: '在线解码 JWT Token，查看 Header/Payload' },
+    { file: 'json-to-csv.html',         name: 'JSON 转 CSV',  icon: '📊', desc: 'JSON 数据一键转换为 CSV 格式' },
+    { file: 'csv-to-json.html',         name: 'CSV 转 JSON',  icon: '📋', desc: 'CSV/Excel 表格数据转换为 JSON' }
   ];
 
   function toolUrl(file) {
@@ -154,4 +159,17 @@
   initTheme();
   renderAds();
   renderFooter();
+
+  /* ---------------- Service Worker 注册 ---------------- */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js')
+        .then(function (registration) {
+          console.log('[SW] Registered:', registration.scope);
+        })
+        .catch(function (error) {
+          console.log('[SW] Registration failed:', error);
+        });
+    });
+  }
 })();

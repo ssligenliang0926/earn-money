@@ -51,6 +51,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://quicktool.xin/tools/markdown-preview.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://quicktool.xin/tools/regex-tester.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -117,6 +122,26 @@
   </url>
   <url>
     <loc>https://quicktool.xin/tools/mortgage-calculator.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://quicktool.xin/tools/api-tester.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://quicktool.xin/tools/jwt-decoder.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://quicktool.xin/tools/json-to-csv.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://quicktool.xin/tools/csv-to-json.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

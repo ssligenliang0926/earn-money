@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API 响应测试器 - 在线 HTTP 请求测试工具 | 极简工具箱</title>
+<meta name="description" content="免费在线 API 测试工具，支持 GET/POST/PUT/DELETE 请求，查看响应状态码、响应头、响应体，实时格式化 JSON/XML。无需安装 Postman，打开即用，数据不离开浏览器。">
+<meta name="keywords" content="API测试,接口测试,HTTP请求测试,Postman替代,在线调试,JSON测试,REST API">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "API 响应测试器",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "在线 API 测试工具，支持 GET/POST/PUT/DELETE 请求，查看响应状态码、响应头、响应体",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<style>
+.method-select {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.method-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all .15s;
+}
+.method-btn:hover { border-color: var(--primary); }
+.method-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.method-btn.get.active { background: #16a34a; border-color: #16a34a; }
+.method-btn.post.active { background: #2563eb; border-color: #2563eb; }
+.method-btn.put.active { background: #f59e0b; border-color: #f59e0b; }
+.method-btn.delete.active { background: #dc2626; border-color: #dc2626; }
+.header-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.header-key, .header-val { flex: 1; }
+.header-key input, .header-val input { width: 100%; }
+.remove-header {
+  padding: 6px 10px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.response-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.response-status.success { background: rgba(22,163,74,.12); color: #16a34a; }
+.response-status.error { background: rgba(220,38,38,.12); color: #dc2626; }
+.response-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.response-meta span { display: flex; align-items: center; gap: 4px; }
+.cors-notice {
+  background: rgba(245,158,11,.12);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  color: #92400e;
+  margin-bottom: 16px;
+}
+[data-theme="dark"] .cors-notice { color: #fcd34d; }
+</style>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">🔌 API 响应测试器</h1>
+  <p class="page-desc">在线测试 HTTP 接口，支持 GET/POST/PUT/DELETE，实时查看响应状态、头信息和响应体</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="apiUrl">请求 URL</label>
+        <input type="text" id="apiUrl" placeholder="https://api.example.com/data" value="">
+      </div>
+
+      <div class="field">
+        <label>请求方法</label>
+        <div class="method-select">
+          <button class="method-btn get active" data-method="GET">GET</button>
+          <button class="method-btn post" data-method="POST">POST</button>
+          <button class="method-btn put" data-method="PUT">PUT</button>
+          <button class="method-btn delete" data-method="DELETE">DELETE</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>请求头（Headers）</label>
+        <div id="headersList">
+          <div class="header-row">
+            <input type="text" class="header-key" placeholder="Key" value="Content-Type">
+            <input type="text" class="header-val" placeholder="Value" value="application/json">
+            <button class="remove-header" onclick="this.parentElement.remove()">×</button>
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="margin-top:8px" onclick="addHeader()">+ 添加 Header</button>
+      </div>
+
+      <div class="field" id="bodyField" style="display:none">
+        <label for="requestBody">请求体（Body）</label>
+        <textarea id="requestBody" rows="6" placeholder='{"key": "value"}'></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="btnSend" type="button">发送请求</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+
+      <div id="corsNotice" class="cors-notice" style="display:none">
+        ⚠️ <strong>CORS 限制提示：</strong>如果目标 API 没有配置跨域访问，浏览器会阻止请求。建议使用代理插件或直接在服务端测试。
+      </div>
+
+      <div id="responseSection" style="display:none">
+        <div id="responseStatus" class="response-status"></div>
+        <div class="response-meta">
+          <span>⏱️ 耗时：<strong id="responseTime">-</strong></span>
+          <span>📦 大小：<strong id="responseSize">-</strong></span>
+          <span>📋 类型：<strong id="responseType">-</strong></span>
+        </div>
+        <div class="field">
+          <label>响应头</label>
+          <div id="responseHeaders" class="result-box" style="max-height:150px;overflow-y:auto"></div>
+        </div>
+        <div class="field">
+          <label>响应体</label>
+          <div id="responseBody" class="result-box" style="max-height:400px;overflow-y:auto;white-space:pre-wrap"></div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btnCopyResponse" type="button">复制响应</button>
+        </div>
+      </div>
+
+      <p class="msg" id="msg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于 API 测试</h2>
+        <p>API 测试是开发过程中验证接口功能的重要手段。本工具支持常见的 HTTP 方法（GET、POST、PUT、DELETE），可以自定义请求头和请求体，实时查看响应状态码、响应头和响应体。</p>
+        <p>与 Postman 等桌面应用相比，本工具的的优势是无需下载安装，打开浏览器即可使用，且所有操作均在本地完成，不会上传数据到服务器。</p>
+        <p>注意：由于浏览器安全策略（CORS），部分 API 可能无法直接调用。建议配合浏览器插件（如 CORS Unblock）使用，或在支持跨域的测试环境运行。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>为什么我的请求失败？</h3>
+    <p>最常见的原因是 CORS（跨域资源共享）限制。浏览器默认不允许前端代码向不同域的 API 发起请求，除非目标服务器明确允许。解决方法：1) 使用支持跨域的测试 API；2) 安装浏览器 CORS 插件；3) 在本地搭建代理服务器。</p>
+    <h3>如何测试 POST 请求？</h3>
+    <p>选择 POST 方法后，在请求体区域输入 JSON 格式的数据，例如：<code>{"name": "张三", "age": 25}</code>。然后点击"发送请求"即可。</p>
+    <h3>支持哪些响应格式？</h3>
+    <p>本工具支持 JSON、XML、纯文本等常见响应格式。如果是 JSON 格式，会自动格式化显示。</p>
+  </section>
+</main>
+<script src="../js/analytics.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elUrl = document.getElementById('apiUrl');
+  var elBody = document.getElementById('requestBody');
+  var elBodyField = document.getElementById('bodyField');
+  var elCorsNotice = document.getElementById('corsNotice');
+  var elResponseSection = document.getElementById('responseSection');
+  var elResponseStatus = document.getElementById('responseStatus');
+  var elResponseTime = document.getElementById('responseTime');
+  var elResponseSize = document.getElementById('responseSize');
+  var elResponseType = document.getElementById('responseType');
+  var elResponseHeaders = document.getElementById('responseHeaders');
+  var elResponseBody = document.getElementById('responseBody');
+  var elMsg = document.getElementById('msg');
+  var currentMethod = 'GET';
+
+  function setMsg(text, ok) {
+    elMsg.textContent = text;
+    elMsg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function formatJson(obj) {
+    try {
+      return JSON.stringify(obj, null, 2);
+    } catch (e) {
+      return String(obj);
+    }
+  }
+
+  function addHeader() {
+    var div = document.createElement('div');
+    div.className = 'header-row';
+    div.innerHTML = '<input type="text" class="header-key" placeholder="Key"><input type="text" class="header-val" placeholder="Value"><button class="remove-header" onclick="this.parentElement.remove()">×</button>';
+    document.getElementById('headersList').appendChild(div);
+  }
+
+  function getHeaders() {
+    var headers = {};
+    var rows = document.querySelectorAll('#headersList .header-row');
+    rows.forEach(function (row) {
+      var key = row.querySelector('.header-key').value.trim();
+      var val = row.querySelector('.header-val').value.trim();
+      if (key && val) headers[key] = val;
+    });
+    return headers;
+  }
+
+  function sendRequest() {
+    var url = elUrl.value.trim();
+    if (!url) {
+      setMsg('请输入请求 URL', false);
+      return;
+    }
+
+    elCorsNotice.style.display = 'none';
+    elResponseSection.style.display = 'none';
+    setMsg('发送中...', true);
+
+    var startTime = performance.now();
+    var options = {
+      method: currentMethod,
+      headers: getHeaders()
+    };
+
+    if (['POST', 'PUT', 'PATCH'].includes(currentMethod) && elBody.value.trim()) {
+      options.body = elBody.value.trim();
+    }
+
+    fetch(url, options)
+      .then(function (response) {
+        var endTime = performance.now();
+        var duration = (endTime - startTime).toFixed(0);
+
+        var statusClass = response.status >= 200 && response.status < 300 ? 'success' : 'error';
+        elResponseStatus.className = 'response-status ' + statusClass;
+        elResponseStatus.textContent = '状态码：' + response.status + ' ' + response.statusText;
+
+        elResponseTime.textContent = duration + ' ms';
+        elResponseHeaders.textContent = '';
+        response.headers.forEach(function (val, key) {
+          elResponseHeaders.textContent += key + ': ' + val + '\n';
+        });
+
+        return response.text().then(function (text) {
+          elResponseSize.textContent = formatBytes(new Blob([text]).size);
+          elResponseBody.textContent = text;
+          elResponseSection.style.display = '';
+          setMsg('✓ 请求成功', true);
+        });
+      })
+      .catch(function (error) {
+        elCorsNotice.style.display = '';
+        setMsg('✗ 请求失败：' + error.message, false);
+      });
+  }
+
+  // Method buttons
+  document.querySelectorAll('.method-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.method-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentMethod = btn.getAttribute('data-method');
+      elBodyField.style.display = ['POST', 'PUT', 'PATCH'].includes(currentMethod) ? '' : 'none';
+    });
+  });
+
+  document.getElementById('btnSend').addEventListener('click', sendRequest);
+  elUrl.addEventListener('keydown', function (e) { if (e.key === 'Enter') sendRequest(); });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    elUrl.value = '';
+    elBody.value = '';
+    elResponseSection.style.display = 'none';
+    elCorsNotice.style.display = 'none';
+    setMsg('', true);
+    elUrl.focus();
+  });
+
+  document.getElementById('btnCopyResponse').addEventListener('click', function () {
+    var text = '状态：' + elResponseStatus.textContent + '\n' +
+      '耗时：' + elResponseTime.textContent + '\n' +
+      '大小：' + elResponseSize.textContent + '\n\n' +
+      '响应头：\n' + elResponseHeaders.textContent + '\n' +
+      '响应体：\n' + elResponseBody.textContent;
+    window.copyText(text);
+  });
+
+  /* 相关工具 */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

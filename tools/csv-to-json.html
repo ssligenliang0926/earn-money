@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel/CSV 转 JSON - 在线表格数据转换工具 | 极简工具箱</title>
+<meta name="description" content="免费在线 CSV/Excel 转 JSON 工具，支持文件上传和粘贴表格数据，自动生成 JSON 数组。纯前端处理，数据不上传服务器。">
+<meta name="keywords" content="Excel转JSON,CSV转JSON,表格转JSON,数据转换,在线工具">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Excel/CSV 转 JSON",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "将 CSV 或 Excel 表格数据转换为 JSON 格式",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">📋 CSV/Excel 转 JSON</h1>
+  <p class="page-desc">将表格数据一键转换为 JSON 格式，支持文件上传和粘贴</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="csvInput">粘贴 CSV 数据 或 上传文件</label>
+        <textarea id="csvInput" rows="6" placeholder="id,name,age&#10;1,张三,25&#10;2,李四,30"></textarea>
+      </div>
+      
+      <div class="field">
+        <label>或上传 CSV/Excel 文件</label>
+        <input type="file" id="fileInput" accept=".csv,.tsv,.txt" style="margin-top:4px">
+      </div>
+
+      <div class="field">
+        <label>分隔符</label>
+        <select id="delimiter">
+          <option value=",">逗号 (,)</option>
+          <option value=";">分号 (;)</option>
+          <option value="\t">制表符 (Tab)</option>
+        </select>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="firstRowAsHeader" checked>
+        <label for="firstRowAsHeader">第一行作为字段名</label>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="btnConvert" type="button">转换为 JSON</button>
+        <button class="btn btn-secondary" id="btnDownload" type="button">下载 JSON</button>
+        <button class="btn btn-secondary" id="btnCopy" type="button">复制 JSON</button>
+        <button class="btn btn-secondary" id="btnSample" type="button">填入示例</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+      </div>
+
+      <div class="field" id="resultSection" style="display:none">
+        <label>JSON 输出</label>
+        <textarea id="jsonOutput" rows="10" readonly></textarea>
+      </div>
+
+      <p class="msg" id="msg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于 CSV 转 JSON</h2>
+        <p>CSV（Comma Separated Values）是常用的表格数据格式，而 JSON（JavaScript Object Notation）是更灵活的数据交换格式。本工具可以帮助您快速将表格数据转换为 JSON 格式。</p>
+        <p>支持的功能：</p>
+        <ul style="margin-left:20px;margin-top:8px;color:var(--text-muted)">
+          <li>直接粘贴 CSV 数据</li>
+          <li>上传 CSV/TXT 文件</li>
+          <li>自定义分隔符</li>
+          <li>自动识别字段名</li>
+          <li>数据在浏览器本地处理</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+</main>
+<script src="../js/analytics.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elInput = document.getElementById('csvInput');
+  var elFile = document.getElementById('fileInput');
+  var elDelimiter = document.getElementById('delimiter');
+  var elFirstRow = document.getElementById('firstRowAsHeader');
+  var elOutput = document.getElementById('jsonOutput');
+  var elResult = document.getElementById('resultSection');
+  var elMsg = document.getElementById('msg');
+
+  var SAMPLE_CSV = 'id,name,age,city\n1,张三,25,北京\n2,李四,30,上海\n3,王五,28,广州';
+
+  function setMsg(text, ok) {
+    elMsg.textContent = text;
+    elMsg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function parseCsv(text, delimiter) {
+    var lines = text.trim().split(/\r?\n/);
+    if (lines.length === 0) return [];
+
+    delimiter = delimiter === '\\t' ? '\t' : delimiter;
+    
+    var headers = elFirstRow.checked ? parseCsvLine(lines[0], delimiter) : null;
+    var startIdx = elFirstRow.checked ? 1 : 0;
+    var result = [];
+
+    for (var i = startIdx; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      var values = parseCsvLine(lines[i], delimiter);
+      if (headers) {
+        var obj = {};
+        headers.forEach(function(h, idx) {
+          obj[h] = values[idx] || '';
+        });
+        result.push(obj);
+      } else {
+        result.push(values);
+      }
+    }
+
+    return result;
+  }
+
+  function parseCsvLine(line, delimiter) {
+    var result = [];
+    var current = '';
+    var inQuotes = false;
+
+    for (var i = 0; i < line.length; i++) {
+      var char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === delimiter && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current);
+    return result;
+  }
+
+  function convert() {
+    var text = elInput.value.trim();
+    if (!text) {
+      setMsg('请输入 CSV 数据或上传文件', false);
+      elResult.style.display = 'none';
+      return;
+    }
+
+    try {
+      var data = parseCsv(text, elDelimiter.value);
+      elOutput.value = JSON.stringify(data, null, 2);
+      elResult.style.display = '';
+      setMsg('✓ 转换成功，共 ' + data.length + ' 条记录', true);
+    } catch (e) {
+      elResult.style.display = 'none';
+      setMsg('✗ 解析失败: ' + e.message, false);
+    }
+  }
+
+  function downloadJson() {
+    if (!elOutput.value) {
+      setMsg('请先转换数据', false);
+      return;
+    }
+    var blob = new Blob([elOutput.value], { type: 'application/json' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'data.json';
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setMsg('✓ 下载成功', true);
+  }
+
+  function copyJson() {
+    if (!elOutput.value) {
+      setMsg('请先转换数据', false);
+      return;
+    }
+    window.copyText(elOutput.value);
+  }
+
+  // 文件上传
+  elFile.addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      elInput.value = e.target.result;
+      convert();
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('btnConvert').addEventListener('click', convert);
+  document.getElementById('btnDownload').addEventListener('click', downloadJson);
+  document.getElementById('btnCopy').addEventListener('click', copyJson);
+
+  document.getElementById('btnSample').addEventListener('click', function () {
+    elInput.value = SAMPLE_CSV;
+    convert();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    elInput.value = '';
+    elFile.value = '';
+    elOutput.value = '';
+    elResult.style.display = 'none';
+    setMsg('', true);
+    elInput.focus();
+  });
+
+  /* 相关工具 */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

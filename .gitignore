@@ -1,11 +1,21 @@
-node_modules/
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Browser cache
 .npm-cache/
-.vercel-data/
-.vercel-cache/
-.vercel-config/
-.gh-config/
-gh-cli/
-gh.zip
-package.json
-package-lock.json
-*.png
+npm-debug.log*
+
+# Playwright browser
+pw_browsers/
+
+# Node modules
+node_modules/
+
+# Vercel
+.vercel/
+
+# Test outputs
+test_screenshots/
+test_report.html

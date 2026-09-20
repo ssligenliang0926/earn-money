@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWT 解码器 - 在线 JWT Token 解析工具 | 极简工具箱</title>
+<meta name="description" content="免费在线 JWT 解码器，支持解码 JWT Token，查看 Header 和 Payload，验证 Token 签名。纯前端实现，Token 不上传服务器，安全保密。">
+<meta name="keywords" content="JWT解码,JWT解析,Token解码,JWT验证,JSON Web Token,在线解码">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "JWT 解码器",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "description": "在线解码 JWT Token，查看 Header 和 Payload，验证 Token 信息",
+  "offers": { "@type": "Offer", "price": "0" }
+}
+</script>
+<style>
+.jwt-parts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.jwt-part {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.jwt-part-header {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.jwt-part pre {
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+}
+.token-input {
+  font-family: Consolas, Monaco, monospace;
+  font-size: 13px;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.status-badge.valid { background: rgba(22,163,74,.12); color: #16a34a; }
+.status-badge.invalid { background: rgba(220,38,38,.12); color: #dc2626; }
+.status-badge.uncertain { background: rgba(245,158,11,.12); color: #f59e0b; }
+.expiry-info {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.expiry-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.expiry-item .label { color: var(--text-muted); }
+.expiry-item .value { font-weight: 600; }
+</style>
+</head>
+<body>
+<main class="container">
+  <h1 class="page-title">🔐 JWT 解码器</h1>
+  <p class="page-desc">在线解码 JWT Token，查看 Header、Payload 和签名信息，Token 仅在浏览器本地处理</p>
+
+  <div class="ad-slot"></div>
+
+  <div class="tool-layout">
+    <section class="panel">
+      <div class="field">
+        <label for="jwtInput">粘贴 JWT Token</label>
+        <textarea id="jwtInput" class="token-input" rows="4" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="btnDecode" type="button">解码</button>
+        <button class="btn btn-secondary" id="btnClear" type="button">清空</button>
+        <button class="btn btn-secondary" id="btnSample" type="button">填入示例</button>
+      </div>
+
+      <div id="jwtResult" style="display:none">
+        <div class="jwt-parts">
+          <div class="jwt-part">
+            <div class="jwt-part-header">📋 Header</div>
+            <pre id="headerDisplay"></pre>
+          </div>
+          <div class="jwt-part">
+            <div class="jwt-part-header">👤 Payload</div>
+            <pre id="payloadDisplay"></pre>
+          </div>
+          <div class="jwt-part">
+            <div class="jwt-part-header">🔒 Signature</div>
+            <pre id="signatureDisplay"></pre>
+          </div>
+        </div>
+
+        <div id="statusSection" style="margin:16px 0">
+          <span id="statusBadge" class="status-badge uncertain">⚠️ 签名验证状态未知</span>
+          <p class="msg" id="statusMsg" style="margin-top:8px;font-size:12px;color:var(--text-muted)"></p>
+        </div>
+
+        <div class="expiry-info" id="expiryInfo"></div>
+      </div>
+
+      <p class="msg" id="msg"></p>
+    </section>
+
+    <aside>
+      <div class="panel related">
+        <h2>相关工具</h2>
+        <div class="related-list" id="relatedList"></div>
+      </div>
+      <div class="panel seo-text">
+        <h2>关于 JWT</h2>
+        <p>JWT（JSON Web Token）是一种开放的行业标准（RFC 7519），用于在各方之间安全地传输信息。JWT 由三部分组成：Header（头部）、Payload（载荷）和 Signature（签名）。</p>
+        <p><strong>Header</strong> 通常包含令牌类型（JWT）和签名算法（如 HMAC SHA256、RS256）。</p>
+        <p><strong>Payload</strong> 包含声明（claims），即关于实体（通常是用户）和其他数据的声明。标准声明包括 iss（签发者）、exp（过期时间）、sub（主题）等。</p>
+        <p><strong>Signature</strong> 用于验证消息在传输过程中没有被篡改。签名通过 Header 中指定的算法对 Header 和 Payload 进行编码后计算得出。</p>
+        <p>本工具仅解码 JWT Token，不会验证签名有效性（需要密钥），也不会上传您的 Token 到任何服务器。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="ad-slot"></div>
+
+  <section class="panel seo-text faq">
+    <h2>常见问题</h2>
+    <h3>JWT Token 安全吗？</h3>
+    <p>JWT 本身是 Base64URL 编码的，不是加密的。这意味着任何人都可以解码查看内容。JWT 的安全性依赖于签名验证，只有持有正确密钥的服务端才能验证 Token 的有效性。请妥善保管您的 JWT，不要在前端代码中硬编码密钥。</p>
+    <h3>如何验证 JWT 签名？</h3>
+    <p>本工具仅解码 Token，不验证签名。要验证签名，您需要使用服务端代码配合正确的密钥。常见的 JWT 验证库包括：jsonwebtoken（Node.js）、PyJWT（Python）、jwt（Java）等。</p>
+    <h3>JWT 和 Session 有什么区别？</h3>
+    <p>JWT 是无状态的，所有信息都存储在 Token 中，服务端不需要保存会话信息。Session 是有状态的，服务端需要保存会话数据。JWT 适合分布式系统和 API 认证，Session 适合传统的 Web 应用。</p>
+  </section>
+</main>
+<script src="../js/analytics.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var elInput = document.getElementById('jwtInput');
+  var elResult = document.getElementById('jwtResult');
+  var elHeader = document.getElementById('headerDisplay');
+  var elPayload = document.getElementById('payloadDisplay');
+  var elSignature = document.getElementById('signatureDisplay');
+  var elStatusBadge = document.getElementById('statusBadge');
+  var elStatusMsg = document.getElementById('statusMsg');
+  var elExpiryInfo = document.getElementById('expiryInfo');
+  var elMsg = document.getElementById('msg');
+
+  var SAMPLE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
+  function setMsg(text, ok) {
+    elMsg.textContent = text;
+    elMsg.className = 'msg ' + (ok ? 'success' : 'error');
+  }
+
+  function base64UrlDecode(str) {
+    // 替换 Base64URL 字符为 Base64 字符
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    // 添加 padding
+    while (str.length % 4) str += '=';
+    try {
+      return decodeURIComponent(atob(str).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+    } catch (e) {
+      return atob(str);
+    }
+  }
+
+  function decodeJWT(token) {
+    var parts = token.trim().split('.');
+    if (parts.length !== 3) {
+      throw new Error('无效的 JWT Token 格式，应为三部分用点号分隔');
+    }
+
+    var header, payload;
+    try {
+      header = JSON.parse(base64UrlDecode(parts[0]));
+      payload = JSON.parse(base64UrlDecode(parts[1]));
+    } catch (e) {
+      throw new Error('解码失败: ' + e.message);
+    }
+
+    return {
+      header: header,
+      payload: payload,
+      signature: parts[2],
+      raw: token.trim()
+    };
+  }
+
+  function formatTime(timestamp) {
+    if (!timestamp) return '-';
+    var date = new Date(timestamp * 1000);
+    return date.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  }
+
+  function formatDateRelative(timestamp) {
+    if (!timestamp) return '-';
+    var now = Math.floor(Date.now() / 1000);
+    var diff = timestamp - now;
+    
+    if (diff > 0) {
+      var minutes = Math.floor(diff / 60);
+      var hours = Math.floor(minutes / 60);
+      var days = Math.floor(hours / 24);
+      if (days > 0) return '剩余 ' + days + ' 天';
+      if (hours > 0) return '剩余 ' + hours + ' 小时';
+      return '剩余 ' + minutes + ' 分钟';
+    } else {
+      return '已过期 ' + Math.abs(Math.floor(diff / 60)) + ' 分钟前';
+    }
+  }
+
+  function decode() {
+    var token = elInput.value.trim();
+    if (!token) {
+      setMsg('请输入 JWT Token', false);
+      elResult.style.display = 'none';
+      return;
+    }
+
+    try {
+      var result = decodeJWT(token);
+      
+      elHeader.textContent = JSON.stringify(result.header, null, 2);
+      elPayload.textContent = JSON.stringify(result.payload, null, 2);
+      elSignature.textContent = result.signature;
+      
+      elResult.style.display = '';
+      setMsg('✓ 解码成功', true);
+
+      // 状态指示
+      var hasExp = result.payload.exp !== undefined;
+      var hasIat = result.payload.iat !== undefined;
+      
+      if (hasExp) {
+        var now = Math.floor(Date.now() / 1000);
+        var isExpired = result.payload.exp < now;
+        
+        elStatusBadge.className = 'status-badge ' + (isExpired ? 'invalid' : 'valid');
+        elStatusBadge.textContent = isExpired ? '❌ Token 已过期' : '✓ Token 有效';
+        elStatusMsg.textContent = '过期时间: ' + formatTime(result.payload.exp);
+      } else {
+        elStatusBadge.className = 'status-badge uncertain';
+        elStatusBadge.textContent = '⚠️ 未找到过期时间';
+        elStatusMsg.textContent = '该 Token 未设置 exp 字段';
+      }
+
+      // 过期信息
+      elExpiryInfo.innerHTML = '';
+      if (result.payload.exp) {
+        elExpiryInfo.innerHTML += '<div class="expiry-item"><span class="label">过期时间:</span><span class="value">' + formatTime(result.payload.exp) + '</span></div>';
+        elExpiryInfo.innerHTML += '<div class="expiry-item"><span class="label">状态:</span><span class="value">' + formatDateRelative(result.payload.exp) + '</span></div>';
+      }
+      if (result.payload.iat) {
+        elExpiryInfo.innerHTML += '<div class="expiry-item"><span class="label">签发时间:</span><span class="value">' + formatTime(result.payload.iat) + '</span></div>';
+      }
+
+    } catch (e) {
+      elResult.style.display = 'none';
+      setMsg('✗ ' + e.message, false);
+    }
+  }
+
+  document.getElementById('btnDecode').addEventListener('click', decode);
+  elInput.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.ctrlKey) decode(); });
+
+  document.getElementById('btnClear').addEventListener('click', function () {
+    elInput.value = '';
+    elResult.style.display = 'none';
+    setMsg('', true);
+    elInput.focus();
+  });
+
+  document.getElementById('btnSample').addEventListener('click', function () {
+    elInput.value = SAMPLE_TOKEN;
+    decode();
+  });
+
+  /* 相关工具 */
+  var rel = document.getElementById('relatedList');
+  if (rel && window.TOOL_LIST) {
+    var current = location.pathname.split('/').pop();
+    rel.innerHTML = window.TOOL_LIST
+      .filter(function (t) { return t.file !== current; })
+      .map(function (t) { return '<a href="' + t.file + '">' + t.name + '</a>'; })
+      .join('');
+  }
+})();
+</script>
+</body>
+</html>

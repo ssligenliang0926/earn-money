@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -35,10 +35,12 @@
       <div class="field">
         <label for="bmiHeight">身高（厘米）</label>
         <input type="number" id="bmiHeight" min="50" max="250" step="0.1" placeholder="例如 170" inputmode="decimal">
+        <p class="msg" id="heightMsg" style="display:none;margin-top:4px"></p>
       </div>
       <div class="field">
         <label for="bmiWeight">体重（公斤）</label>
         <input type="number" id="bmiWeight" min="10" max="500" step="0.1" placeholder="例如 65" inputmode="decimal">
+        <p class="msg" id="weightMsg" style="display:none;margin-top:4px"></p>
       </div>
       <div class="btn-group">
         <button class="btn" id="btnCalc" type="button">计算 BMI</button>
@@ -134,7 +136,7 @@
     <p>不适用。未成年人处于生长发育期，需使用按年龄、性别划分的 BMI 百分位曲线来评估，请咨询儿科医生或使用专门的儿童生长曲线工具。</p>
   </section>
 </main>
-<script src="../js/common.js"></script>
+<script src="../js/analytics.js"></script>`n<script src="../js/common.js"></script>
 <script>
 (function () {
   'use strict';
@@ -148,6 +150,9 @@
   var elRange = document.getElementById('bmiRange');
   var elDiff = document.getElementById('bmiDiff');
   var elMsg = document.getElementById('bmiMsg');
+  var elHeightMsg = document.getElementById('heightMsg');
+  var elWeightMsg = document.getElementById('weightMsg');
+
 
   var LEVELS = [
     { max: 18.5, name: '偏瘦', color: '#3b82f6', bg: 'rgba(59,130,246,.12)' },
@@ -165,17 +170,29 @@
     elMsg.className = 'msg ' + (ok ? 'success' : 'error');
   }
 
+  function setFieldMsg(el, text, ok) {
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'success' : 'error');
+    el.style.display = text ? '' : 'none';
+  }
+
   function calc() {
     var h = parseFloat(elHeight.value);
     var w = parseFloat(elWeight.value);
+    setFieldMsg(elHeightMsg, '', true);
+    setFieldMsg(elWeightMsg, '', true);
+
     if (isNaN(h) || h < 50 || h > 250) {
       elResult.style.display = 'none';
-      setMsg('请输入 50 ~ 250 之间的身高（厘米）', false);
+      setFieldMsg(elHeightMsg, '请输入 50 ~ 250 之间的身高（厘米）', false);
+      setMsg('', true);
       return;
     }
     if (isNaN(w) || w < 10 || w > 500) {
       elResult.style.display = 'none';
-      setMsg('请输入 10 ~ 500 之间的体重（公斤）', false);
+      setFieldMsg(elWeightMsg, '请输入 10 ~ 500 之间的体重（公斤）', false);
+      setMsg('', true);
       return;
     }
 
@@ -223,6 +240,8 @@
     elWeight.value = '';
     elResult.style.display = 'none';
     setMsg('', true);
+    setFieldMsg(elHeightMsg, '', true);
+    setFieldMsg(elWeightMsg, '', true);
     elHeight.focus();
   });
 
@@ -249,3 +268,4 @@
 </script>
 </body>
 </html>
+

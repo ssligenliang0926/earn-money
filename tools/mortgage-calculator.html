@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -34,7 +34,8 @@
     <section class="panel">
       <div class="field">
         <label for="loanAmount">贷款金额（万元）</label>
-        <input type="number" id="loanAmount" min="1" max="10000" step="1" placeholder="例如 100" inputmode="decimal" value="100">
+        <input type="number" id="loanAmount" min="1" max="10000" step="1" placeholder="例如 100（表示100万）" inputmode="decimal" value="100">
+        <p class="msg" style="color:var(--text-muted);font-size:12px;margin-top:4px">输入金额单位为万元，100 表示 100 万元</p>
       </div>
       <div class="field">
         <label for="loanYears">贷款年限（1 ~ 30 年）</label>
@@ -145,7 +146,7 @@
     <p>组合贷可以分开计算：分别输入公积金贷款与商业贷款的金额和利率各算一次，再将两部分月供相加即可。</p>
   </section>
 </main>
-<script src="../js/common.js"></script>
+<script src="../js/analytics.js"></script>`n<script src="../js/common.js"></script>
 <script>
 (function () {
   'use strict';
@@ -331,3 +332,4 @@
 </script>
 </body>
 </html>
+
