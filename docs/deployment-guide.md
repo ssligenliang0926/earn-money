@@ -89,16 +89,38 @@ vercel
 
 ### 4.1 仓库准备
 
-1. 创建 GitHub 仓库（建议命名：`quicktool-xin`）
+1. 创建 GitHub 仓库（本项目实际使用：`ssligenliang0926/earn-money`）
 2. 将项目代码推送到 `main` 分支
-3. 仓库设置 → Pages → Source 选择 main 分支
+3. 仓库设置 → Pages → Source 选择 `main` 分支，目录选 `/` (root)
 
 ### 4.2 访问地址
 
-- 默认地址：`https://username.github.io/quicktool-xin/`
-- 自定义域名：在仓库根目录创建 `CNAME` 文件，内容为 `www.quicktool.xin`
+- 默认地址：`https://ssligenliang0926.github.io/earn-money/`
+- 自定义域名：在仓库根目录创建 `CNAME` 文件，**内容为 `quicktool.xin`（apex 裸域，不要写 `www.`）**
 
-### 4.3 GitHub Actions 自动部署
+> ⚠️ **重要：CNAME 文件内容必须是 apex 裸域 `quicktool.xin`。**
+> 若误写为 `www.quicktool.xin`，GitHub Pages 会把站点绑定到 www 子域，
+> 而 DNS 的 A 记录指向 apex，两者不匹配会导致全站 404。
+>
+> 该文件曾在提交 `9b87b77` 中被误删，导致 `quicktool.xin` 返回
+> "There isn't a GitHub Pages site here."，已于 `61b4232` 恢复。
+> 修改首页或 SEO 时请勿顺带删除此文件。
+
+### 4.3 www 子域重定向（GitHub Pages 自动处理）
+
+GitHub Pages 会在 apex 与 www 之间自动重定向，**无需在代码或 DNS 中额外配置**，
+只需同时满足：
+
+1. 仓库 `CNAME` 文件内容为 apex 裸域：`quicktool.xin`
+2. DNS 中存在 www 的 CNAME 记录：`www.quicktool.xin` → `ssligenliang0926.github.io`
+   （注意：指向 `<user>.github.io`，**不含仓库名**）
+
+配置正确后，`https://www.quicktool.xin/任意路径` 会 301 跳转到 `https://quicktool.xin/对应路径`。
+
+> 注意：DNS 的 `CNAME` **记录**（用于域名解析）与仓库里的 `CNAME` **文件**
+> （用于 GitHub Pages 认领域名）是两个不同的东西，不要混淆。
+
+### 4.4 GitHub Actions 自动部署（可选）
 
 创建 `.github/workflows/deploy.yml`:
 
@@ -128,7 +150,10 @@ jobs:
 ### 5.1 功能检查
 
 - [ ] 首页正常加载
-- [ ] 所有25个工具页面可访问
+- [ ] 所有28个工具页面可访问
+- [ ] `CNAME` 文件存在且内容为 `quicktool.xin`（apex，不含 www）
+- [ ] `https://quicktool.xin/` 返回 200
+- [ ] `https://www.quicktool.xin/` 301 跳转到 apex
 - [ ] 深浅主题切换正常
 - [ ] 导航菜单正常工作
 - [ ] 广告位正常显示（启用后）
@@ -159,21 +184,39 @@ jobs:
 
 ## 六、域名配置
 
-### 6.1 DNS 记录配置
+### 6.1 DNS 记录配置（本项目实际使用：GitHub Pages）
 
-以腾讯云 DNS 为例：
+以下是 `quicktool.xin` **当前生效**的 DNS 配置（已实测验证）：
 
 ```
-类型    主机记录    记录值                    TTL
------------------------------------------------------
-CNAME  www        cname.vercel-dns.com      600
-A      @          76.76.21.21               600
+类型    主机记录    记录值                        TTL
+---------------------------------------------------------
+A      @          185.199.108.153               600
+A      @          185.199.109.153               600
+A      @          185.199.110.153               600
+A      @          185.199.111.153               600
+CNAME  www        ssligenliang0926.github.io    600
 ```
+
+要点：
+
+- apex（`@`）使用 GitHub Pages 官方的 4 个 A 记录，四个都要加
+- `www` 的 CNAME 指向 `<user>.github.io`，**不要带仓库名**
+- 如需 IPv6，可另加 `AAAA` 记录：`2606:50c0:8000::153` ~ `2606:50c0:8003::153`
+- 切勿使用泛解析 `*.quicktool.xin`，会带来域名被他人接管的
+  风险（参见 GitHub 官方文档的安全警告）
+
+> 若改用 Vercel 部署，DNS 需改为 `cname.vercel-dns.com` 与 `76.76.21.21`；
+> 切换平台时务必同步修改，否则会出现域名解析到 A 平台、
+> 站点却部署在 B 平台的 404 情况。
 
 ### 6.2 SSL 证书
 
-- Vercel/Netlify 自动配置 HTTPS
-- GitHub Pages 需要手动配置或等待自动签发
+- GitHub Pages 在绑定自定义域名后**自动签发** Let's Encrypt 证书
+  （实测：`CN=quicktool.xin`，SAN 同时覆盖 `quicktool.xin` 与 `www.quicktool.xin`）
+- 证书签发通常在 DNS 生效后几分钟到 24 小时内完成
+- 签发完成后，建议在 Settings → Pages 勾选 **Enforce HTTPS**
+- Vercel / Netlify 同样自动配置 HTTPS
 - 腾讯云 COS 需要购买或申请免费证书
 
 ---
@@ -197,6 +240,43 @@ A      @          76.76.21.21               600
 - 等待 DNS 生效（最长48小时）
 - 检查 DNS 记录是否正确
 - 清除浏览器缓存
+
+### Q5: 访问域名显示 "There isn't a GitHub Pages site here."？
+
+这是 **GitHub Pages 找不到域名归属**，不是网站宕机。按顺序排查：
+
+1. **检查仓库根目录是否有 `CNAME` 文件**，内容必须是 apex 裸域：
+
+   ```
+   quicktool.xin
+   ```
+
+   这是最常见的原因——该文件被误删后，DNS 依然正常解析到 GitHub，
+   但 GitHub 收到请求后不知道返回哪个仓库，于是返回此 404 页面。
+   查看是否为误删：`git log --oneline -- CNAME`
+
+2. 确认 `CNAME` 内容**不含 `www.`**（写错会导致全站 404）
+
+3. 用 GitHub API 确认平台侧已认领域名（`cname` 字段不应为 `null`）：
+
+   ```bash
+   gh api repos/ssligenliang0926/earn-money/pages
+   ```
+
+4. 确认 DNS 的 A 记录指向 GitHub Pages 官方 IP（见 6.1 节）
+
+> 注意：只有**根路径**返回该 404、而其他路径能正常 301 时，
+> 通常是 GitHub 边缘节点上的**旧缓存尚未过期**（响应头
+> `X-Cache: HIT`、`Age` 较大），等待其过期即可，无需改动代码。
+
+### Q6: apex 与 www 之间的重定向如何生效？
+
+由 GitHub Pages **自动处理**，无需写代码或重定向规则，只需：
+
+- 仓库 `CNAME` 文件内容为 apex 裸域 `quicktool.xin`
+- DNS 存在 `www` → `ssligenliang0926.github.io` 的 CNAME 记录
+
+两者齐备后，`www` 会自动 301 到 apex（反之亦然，取决于 `CNAME` 里配置的是哪个）。
 
 ---
 
